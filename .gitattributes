@@ -1,0 +1,27 @@
+# Fim de linha e tipo de arquivo.
+#
+# A linha crítica é a dos ganchos. O gancho pre-push é um script de shell que o
+# Git executa; se o checkout no Windows o converter para fim de linha CRLF, ele
+# quebra em silêncio — deixa de barrar qualquer coisa sem dar erro, que é a pior
+# forma de um controle falhar. Forçar LF resolve independentemente do
+# core.autocrlf de cada máquina.
+
+.githooks/*    text eol=lf
+*.sh           text eol=lf
+
+*.tex          text
+*.cls          text
+*.md           text
+*.yml          text
+*.yaml         text
+*.py           text
+*.js           text
+Makefile       text
+
+*.pdf          binary
+*.png          binary
+*.jpg          binary
+*.xlsx         binary
+*.pptx         binary
+*.ttf          binary
+*.otf          binary

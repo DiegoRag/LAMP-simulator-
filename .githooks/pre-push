@@ -1,0 +1,60 @@
+#!/bin/sh
+#
+# Recusa envio direto ao ramo principal.
+#
+# Substitui, na bancada de cada pessoa, a proteção de ramo que o plano gratuito
+# não aplica em repositório privado (ADR-0010).
+#
+# Instalação — uma vez por máquina, na raiz do repositório:
+#
+#     git config core.hooksPath .githooks
+#
+# Ou, equivalente:  make ganchos
+#
+# Este gancho é versionado de propósito: gancho que vive só na máquina de quem
+# o escreveu não é controle da equipe, é hábito de uma pessoa.
+#
+# O .gitattributes força fim de linha LF neste arquivo. Sem isso, o checkout no
+# Windows o converteria para CRLF e ele deixaria de barrar qualquer coisa SEM
+# dar erro — que é a pior forma de um controle falhar.
+
+RAMO_PROTEGIDO="main"
+VAZIO="0000000000000000000000000000000000000000"
+
+while read -r _ref_local sha_local ref_remoto _sha_remoto; do
+  case "$ref_remoto" in
+    "refs/heads/$RAMO_PROTEGIDO")
+      if [ "$sha_local" = "$VAZIO" ]; then
+        motivo="apagar o ramo $RAMO_PROTEGIDO"
+      else
+        motivo="enviar commits direto para o $RAMO_PROTEGIDO"
+      fi
+
+      cat >&2 <<FIM
+
+  Envio recusado: você tentou $motivo.
+
+  No projeto LAMP nada entra no $RAMO_PROTEGIDO sem passar por um pedido de
+  integração com a esteira verde (ADR-0010). O caminho é:
+
+      git switch -c docs/descricao-curta
+      git push -u origin docs/descricao-curta
+
+  e depois abrir o pedido de integração no GitHub.
+
+  Se você já commitou no $RAMO_PROTEGIDO por engano, nada se perdeu:
+
+      git switch -c docs/descricao-curta     # leva os commits para um ramo novo
+      git switch $RAMO_PROTEGIDO
+      git reset --hard origin/$RAMO_PROTEGIDO
+
+  Este gancho pode ser contornado com --no-verify. Se você precisar disso,
+  provavelmente precisa falar com a liderança antes, não depois.
+
+FIM
+      exit 1
+      ;;
+  esac
+done
+
+exit 0

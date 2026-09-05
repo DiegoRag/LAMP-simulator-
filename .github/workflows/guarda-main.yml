@@ -1,0 +1,83 @@
+# Auditoria do ramo principal (ADR-0010, substituto 2).
+#
+# O plano gratuito não aplica proteção de ramo em repositório privado. Este
+# fluxo não IMPEDE o envio direto — nada no plano gratuito impede. Ele torna o
+# envio direto VISÍVEL: um commit que chegou ao main sem pedido de integração
+# deixa uma marca vermelha no histórico e dispara notificação.
+#
+# Transformar violação silenciosa em violação registrada é o que sobra quando
+# não se pode transformá-la em violação impossível.
+
+name: Guarda da main
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  origem:
+    name: Origem dos commits
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sinalizar reescrita de histórico
+        if: ${{ github.event.forced }}
+        run: |
+          echo "::error::O histórico do main foi REESCRITO por um envio forçado."
+          echo "Commits podem ter sido perdidos. Confira o histórico antes de continuar"
+          echo "e avise a liderança — quem tiver um clone local ainda tem a versão anterior."
+          exit 1
+
+      - name: Conferir se cada commit veio de um pedido de integração
+        if: ${{ !github.event.created }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # O evento de envio traz os commits que chegaram. Só os distintos
+          # interessam — os demais já estavam no repositório e já foram
+          # auditados quando chegaram. O evento lista no máximo 20 commits; um
+          # envio maior que isso é auditado parcialmente, e um envio direto
+          # aparece de qualquer forma nos primeiros.
+          shas="$(jq -r '.commits[] | select(.distinct) | .id' "$GITHUB_EVENT_PATH")"
+
+          if [ -z "$shas" ]; then
+            echo "Nenhum commit novo a auditar."
+            exit 0
+          fi
+
+          orfaos=""
+          for sha in $shas; do
+            pr=""
+            # A associação commit → pedido de integração leva alguns segundos
+            # para ser indexada. Três tentativas antes de declarar órfão.
+            for tentativa in 1 2 3; do
+              pr="$(gh api "repos/$REPO/commits/$sha/pulls" \
+                      --jq '[.[] | select(.merged_at != null) | .number] | join(", ")' 2>/dev/null || echo '')"
+              [ -n "$pr" ] && break
+              [ "$tentativa" -lt 3 ] && sleep 10
+            done
+
+            if [ -n "$pr" ]; then
+              echo "  ok      $sha  ←  pedido #$pr"
+            else
+              echo "  ÓRFÃO   $sha"
+              orfaos="$orfaos $sha"
+            fi
+          done
+
+          if [ -n "$orfaos" ]; then
+            echo
+            echo "::error::Commit no main sem pedido de integração:$orfaos"
+            echo "Isto contorna a revisão e a esteira. Não desfaça sozinho:"
+            echo "avise no grupo e registre no relatório da semana (ADR-0010)."
+            exit 1
+          fi
+
+          echo
+          echo "Todos os commits vieram de pedido de integração."
