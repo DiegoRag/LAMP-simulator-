@@ -1,0 +1,67 @@
+# Esteira mínima do lamp-sim (ADR-0010 — é esta a "esteira verde" da regra).
+#
+# O LAMP-GIT-002 define a esteira mínima desta frente: "gerar um conjunto
+# pequeno duas vezes com a mesma semente e comparar". Essa verificação NÃO
+# entra hoje, porque o gerador só existe na Semana 3 (S03-04). Uma verificação
+# que não tem o que verificar é uma verificação que passa sempre.
+#
+# O que roda hoje são as duas que já têm objeto, seguindo o mesmo critério que
+# o guia declara — "uma verificação simples que roda vale mais que dez
+# planejadas" — e a convenção da esteira do lamp-firmware
+# (LAMP-NPQ-HenriqueMacedo-2026-08-29).
+#
+# ENTRA NA SEMANA 3, junto com o gerador:
+#   - determinismo por semente: gerar duas vezes, comparar resumo digital
+#   - instalação das dependências fixadas
+#
+# Roda em pedido de integração, que é onde a verificação tem função: barrar o
+# que não passa antes de entrar no ramo principal.
+
+name: Verificações
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verificacoes-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verificacoes:
+    name: Verificações do repositório
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Convenção herdada da esteira do lamp-firmware, verificação 2. O
+      # acompanhamento automático de dependências avisa quando uma versão fica
+      # vulnerável; ele não tem o que avisar sobre uma linha que não declara
+      # versão alguma.
+      - name: Toda dependência tem versão fixada
+        run: |
+          set -euo pipefail
+          sem_versao="$(grep -vE '^[[:space:]]*(#|$)' requirements.txt | grep -vE '==' || true)"
+          if [ -n "$sem_versao" ]; then
+            echo "::error::Dependência sem versão fixada em requirements.txt:"
+            echo "$sem_versao"
+            exit 1
+          fi
+          echo "Todas as dependências declaram versão fixada."
+
+      # "Versione a receita, não o resultado" (LAMP-GIT-002). A lista de
+      # exclusão evita o acidente comum; esta verificação apanha o incomum,
+      # que é o que de fato acontece — um "git add -A" numa pasta com saída.
+      - name: Nenhum resultado versionado
+        run: |
+          set -euo pipefail
+          achados="$(git ls-files | grep -iE '\.(png|jpe?g|tiff?|bmp|npy|npz|parquet)$|^datasets/' || true)"
+          if [ -n "$achados" ]; then
+            echo "::error::Resultado versionado no lamp-sim. Entra a receita, não o resultado:"
+            echo "$achados"
+            exit 1
+          fi
+          echo "Nenhum resultado versionado."

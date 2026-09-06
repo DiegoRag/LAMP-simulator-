@@ -1,3 +1,29 @@
+# Atualização automatizada de dependências (ADR-0010 — controle real, não substituto).
+#
+# O ADR-0010 registra que os recursos de segurança de dependências funcionam
+# normalmente em repositório privado no plano gratuito: eles não substituem a
+# proteção de ramo que falta, são o controle que o projeto de fato tem.
+#
+# Este repositório tem DOIS conjuntos de dependências, e por isso dois blocos:
+#
+#   pip             as bibliotecas do simulador e da avaliação, em
+#                   requirements.txt, com versão fixada linha a linha. O
+#                   LAMP-OPS-001 nomeia "pip" como o ecossistema de lamp-sim.
+#
+#   github-actions  as ações da esteira. Elas executam com acesso ao
+#                   repositório: uma ação comprometida lê o que a esteira lê.
+#
+# LACUNA DECLARADA, herdada do lamp-docs: as ações estão fixadas por ETIQUETA
+# (@v4), e etiqueta é móvel — o dono da ação pode reapontá-la para conteúdo novo
+# sem que nada aqui mude. A forma correta é fixar por RESUMO DIGITAL, com a
+# etiqueta ao lado em comentário. Fixar por resumo sem Dependabot, porém,
+# congela a esteira em versões vulneráveis — é a atualização automatizada que
+# torna o resumo sustentável. A migração entra no primeiro pedido que o
+# Dependabot abrir.
+#
+# Agrupado num único pedido por semana e por ecossistema, porque cinco pedidos
+# que ninguém abre não são controle — são ruído com aparência de controle.
+
 version: 2
 
 updates:
@@ -12,6 +38,9 @@ updates:
     commit-message:
       prefix: 'chore(deps)'
     labels: [dependencies]
+    groups:
+      bibliotecas:
+        patterns: ['*']
 
   - package-ecosystem: github-actions
     directory: /
@@ -24,3 +53,6 @@ updates:
     commit-message:
       prefix: 'ci(deps)'
     labels: [dependencies, ci]
+    groups:
+      acoes:
+        patterns: ['*']
