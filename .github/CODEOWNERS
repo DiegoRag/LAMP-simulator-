@@ -18,10 +18,14 @@
 #   /src/decisao/, /src/avaliacao/              -> decisão, métricas e avaliação
 #
 # ----------------------------------------------------------------------------
-# PENDENTE: substituir os identificadores abaixo pelos nomes de usuário reais
-# do GitHub. O LAMP-OPS-001 (secao "Ajustar o arquivo de responsáveis") é
-# explícito quanto a isso, e um CODEOWNERS com identificador inexistente falha
-# em silêncio: não sugere revisor e não avisa que deixou de sugerir.
+# PENDENTE: preencher a regra abaixo com os nomes de usuário reais do GitHub da
+# dupla e remover o comentário da linha. O LAMP-OPS-001 (secao "Ajustar o
+# arquivo de responsáveis") é explícito quanto a isso.
+#
+# A regra fica comentada, e não preenchida com identificador provisório, porque
+# um CODEOWNERS com nome de usuário inexistente falha em silêncio: não sugere
+# revisor e não avisa que deixou de sugerir. Regra ausente é uma lacuna visível;
+# regra com identificador inválido tem aparência de controle e não é.
 # ----------------------------------------------------------------------------
 
-*   @usuario-diego @usuario-prado
+# *
