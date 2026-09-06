@@ -1,0 +1,27 @@
+# Revisores automáticos por área — lamp-sim.
+#
+# ============================================================================
+# DIVISÃO INTERNA DA DUPLA: NÃO DECIDIDA (05/09/2026)
+# ============================================================================
+#
+# O LAMP-S02-ATR-03 pede que a dupla combine a divisão "por módulo, não por
+# arquivo" — quem é dono do gerador de cinética, quem é dono do agrupamento
+# temporal — e a registre neste arquivo, porque dois donos do mesmo arquivo é
+# a forma mais confiável de produzir conflito de integração.
+#
+# Essa conversa ainda não aconteceu. Até acontecer, os dois respondem por tudo.
+# É menos eficiente que a divisão por módulo, e tem a vantagem de não ser
+# silencioso: nenhum caminho fica sem revisor declarado.
+#
+# A divisão em discussão, a registrar aqui quando fechar:
+#   /src/quimica/, /src/optica/, /src/camera/   -> cadeia física do gerador
+#   /src/decisao/, /src/avaliacao/              -> decisão, métricas e avaliação
+#
+# ----------------------------------------------------------------------------
+# PENDENTE: substituir os identificadores abaixo pelos nomes de usuário reais
+# do GitHub. O LAMP-OPS-001 (secao "Ajustar o arquivo de responsáveis") é
+# explícito quanto a isso, e um CODEOWNERS com identificador inexistente falha
+# em silêncio: não sugere revisor e não avisa que deixou de sugerir.
+# ----------------------------------------------------------------------------
+
+*   @usuario-diego @usuario-prado

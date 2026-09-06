@@ -1,0 +1,38 @@
+# Versione a receita, não o resultado (LAMP-GIT-002).
+#
+# Neste repositório a regra tem consequência forte: o conjunto sintético NÃO é
+# versionado, e por isso ele precisa ser reprodutível — gerar duas vezes com a
+# mesma semente tem de produzir exatamente o mesmo resultado. Entra o gerador,
+# os parâmetros, a semente e o manifesto; não entram as imagens.
+
+# Saída do gerador
+datasets/
+saida/
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+*.npy
+*.npz
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.ipynb_checkpoints/
+*.egg-info/
+.pytest_cache/
+
+# Sistema operacional e editores
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Compactados: regra provisória de 25 MB até a DEC-23 fechar (LAMP-GIT-002)
+*.zip
+*.tar.gz

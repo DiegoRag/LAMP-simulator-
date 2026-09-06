@@ -1,0 +1,26 @@
+# Dependências do lamp-sim — simulação, dados sintéticos e clusterização temporal.
+#
+# Toda linha tem versão fixada. A convenção vem da esteira mínima do
+# lamp-firmware (LAMP-NPQ-HenriqueMacedo-2026-08-29, verificação 2), e a
+# verificação "Toda dependência tem versão fixada" desta esteira reprova
+# qualquer linha sem "==".
+#
+# Origem: imports do protótipo de simulação do Henrique Prado
+# (lamp_color_ml_2.ipynb) e o protocolo de avaliação LAMP-S02-PROT.
+# Versões conferidas por instalação local em 05/09/2026.
+
+# --- cadeia física do gerador: química -> pH -> espectro -> cor ---
+numpy==2.5.2
+scipy==1.18.1          # brentq, curve_fit: equilibrio acido-base e ajuste da cinetica
+pillow==12.3.0         # PIL: render da bandeja 3x3 e saida PNG (ESP secao 6)
+scikit-image==0.26.0   # skimage.color.rgb2lab: conversao para Lab, eixo de progresso
+
+# --- decisão, avaliação e métricas ---
+scikit-learn==1.9.0    # K-Means, GMM, DBSCAN, hierarquico, ARI, silhouette (PROT secao 5)
+pandas==3.0.5          # manifesto do conjunto e tabelas de resultado
+matplotlib==3.11.1     # curva de erro por tempo de decisao (PROT secao 6)
+
+# Deliberadamente ausente:
+#   pyarrow — só entra se o manifesto for Parquet. A ESP secao 6 deixa a escolha
+#             em aberto ("JSON ou linha de um manifest Parquet/CSV"); acrescentar
+#             o pacote agora seria fechar a decisão por omissão.
