@@ -45,3 +45,5 @@ ligante              = ""
 candidatos_por_regiao = 200   # teto, para a busca combinatória não explodir
 conjuntos_examinados  = 200000
 n_resultados          = 5
+pre_selecao           = 50    # conjuntos que passam para a 2a etapa do ranking (dimeros)
+peso_dimero           = 0.5   # PROVISORIO: pontos por kcal/mol do pior heterodimero; ranqueia, nao filtra
