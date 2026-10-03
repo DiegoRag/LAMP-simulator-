@@ -36,3 +36,6 @@ Thumbs.db
 # Compactados: regra provisória de 25 MB até a DEC-23 fechar (LAMP-GIT-002)
 *.zip
 *.tar.gz
+
+# Entrada real (alvos, conjuntos de isolados) — nunca versionar (ADR-0013, regra 3)
+dados/

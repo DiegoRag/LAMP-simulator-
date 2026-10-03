@@ -24,3 +24,10 @@ matplotlib==3.11.1     # curva de erro por tempo de decisao (PROT secao 6)
 #   pyarrow — só entra se o manifesto for Parquet. A ESP secao 6 deixa a escolha
 #             em aberto ("JSON ou linha de um manifest Parquet/CSV"); acrescentar
 #             o pacote agora seria fechar a decisão por omissão.
+
+# --- primers LAMP (ADR-0013, PLANO-PRIMERS fase 0) ---
+primer3-py==2.3.1     # Tm, grampo e dimeros por termodinamica nearest-neighbor
+biopython==1.88       # complemento reverso, leitura de FASTA, tabelas NN de SantaLucia
+
+# --- testes ---
+pytest==9.1.1
