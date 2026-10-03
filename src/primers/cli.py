@@ -4,8 +4,9 @@ import argparse
 from pathlib import Path
 import sys
 from primers.analise import analisar
+from primers.desenho import AVISO_ASCII, desenhar
 from primers.entrada import carregar_config, ler_alvo, ler_conjunto
-from primers.saida import exportar
+from primers.saida import exportar, exportar_desenho
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -22,9 +23,15 @@ def main(argv: list[str] | None = None) -> int:
     p_analisar.add_argument("--config", default="config/primers.toml", help="Caminho para primers.toml.")
     p_analisar.add_argument("--saida", required=True, help="Pasta de saida (dentro de saida/).")
 
+    p_desenhar = subparsers.add_parser("desenhar", help="Desenha conjuntos de primers LAMP.")
+    p_desenhar.add_argument("--alvo", required=True, help="Caminho para arquivo FASTA com o alvo.")
+    p_desenhar.add_argument("--config", default="config/primers.toml", help="Caminho para primers.toml.")
+    p_desenhar.add_argument("--n", type=int, default=None, help="Numero maximo de conjuntos a devolver.")
+    p_desenhar.add_argument("--saida", required=True, help="Pasta de saida (dentro de saida/).")
+
     args = parser.parse_args(argv)
 
-    if args.subcomando != "analisar":
+    if args.subcomando not in ("analisar", "desenhar"):
         parser.print_help(sys.stderr)
         return 2
 
@@ -39,20 +46,42 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write(f"erro: pasta de saida '{args.saida}' deve ficar dentro de 'saida/'.\n")
         return 2
 
+    if args.subcomando == "analisar":
+        try:
+            cfg = carregar_config(args.config)
+            alvo = ler_alvo(args.alvo) if args.alvo else None
+            leitura = ler_conjunto(args.entrada, alvo=alvo)
+        except ValueError as e:
+            sys.stderr.write(f"erro: {e}\n")
+            return 2
+
+        resultado = analisar(leitura, alvo, cfg)
+        exportar(resultado, args.saida, cfg)
+
+        print(
+            f"Analise concluida: {len(resultado.linhas)} primers, "
+            f"{len(resultado.violacoes)} violacoes, "
+            f"{len(resultado.avisos)} avisos. Pasta de saida: {args.saida}"
+        )
+        return 0
+
     try:
         cfg = carregar_config(args.config)
-        alvo = ler_alvo(args.alvo) if args.alvo else None
-        leitura = ler_conjunto(args.entrada, alvo=alvo)
+        alvo = ler_alvo(args.alvo)
     except ValueError as e:
         sys.stderr.write(f"erro: {e}\n")
         return 2
 
-    resultado = analisar(leitura, alvo, cfg)
-    exportar(resultado, args.saida, cfg)
+    resultado_desenho = desenhar(alvo, cfg, n=args.n)
+    exportar_desenho(resultado_desenho, alvo, args.saida, cfg)
 
+    print(AVISO_ASCII)
+    stats = resultado_desenho.estatisticas
+    cands_str = ", ".join(f"{k}: {v}" for k, v in stats["candidatos_por_tipo"].items())
     print(
-        f"Analise concluida: {len(resultado.linhas)} primers, "
-        f"{len(resultado.violacoes)} violacoes, "
-        f"{len(resultado.avisos)} avisos. Pasta de saida: {args.saida}"
+        f"Conjuntos: {len(resultado_desenho.conjuntos)}, "
+        f"candidatos por tipo: [{cands_str}], "
+        f"examinados: {stats['conjuntos_examinados']}, "
+        f"busca truncada: {stats['busca_truncada']}."
     )
     return 0

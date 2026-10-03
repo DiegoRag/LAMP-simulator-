@@ -153,6 +153,27 @@ def localizar(conjunto: ConjuntoLAMP, alvo: str) -> tuple[dict[str, Regiao], lis
     return regioes, violacoes
 
 
+def calcular_distancias(regioes: dict[str, Regiao]) -> dict[str, int]:
+    """Calcula distâncias e gaps entre regiões LAMP conforme convenção.
+
+    Devolve apenas as distâncias cujas regiões necessárias estão todas presentes.
+    """
+    dist: dict[str, int] = {}
+    if "B2c" in regioes and "F2" in regioes:
+        dist["F2_B2"] = regioes["B2c"].fim - regioes["F2"].ini
+    if "F1" in regioes and "F2" in regioes:
+        dist["F2_F1"] = regioes["F1"].ini - regioes["F2"].ini
+    if "B2c" in regioes and "B1c" in regioes:
+        dist["B1c_B2c"] = regioes["B2c"].fim - regioes["B1c"].fim
+    if "F2" in regioes and "F3" in regioes:
+        dist["F3_F2_gap"] = regioes["F2"].ini - regioes["F3"].fim
+    if "B3c" in regioes and "B2c" in regioes:
+        dist["B2c_B3c_gap"] = regioes["B3c"].ini - regioes["B2c"].fim
+    if "B1c" in regioes and "F1" in regioes:
+        dist["F1_B1c_gap"] = regioes["B1c"].ini - regioes["F1"].fim
+    return dist
+
+
 def verificar(conjunto: ConjuntoLAMP, alvo: str | None, cfg: dict) -> list[Violacao]:
     """Verifica restrições de desenho para o conjunto e, se informado o alvo, distâncias e loops."""
     primers_dict = {
@@ -178,24 +199,11 @@ def verificar(conjunto: ConjuntoLAMP, alvo: str | None, cfg: dict) -> list[Viola
 
     # Distâncias na ordem do arquivo de configuração
     distancias_cfg = cfg.get("distancias", {})
+    dist_calculadas = calcular_distancias(regioes)
     for dist_nome, faixa in distancias_cfg.items():
-        d_min, d_max = float(faixa[0]), float(faixa[1])
-        val = None
-
-        if dist_nome == "F2_B2" and "B2c" in regioes and "F2" in regioes:
-            val = regioes["B2c"].fim - regioes["F2"].ini
-        elif dist_nome == "F2_F1" and "F1" in regioes and "F2" in regioes:
-            val = regioes["F1"].ini - regioes["F2"].ini
-        elif dist_nome == "B1c_B2c" and "B2c" in regioes and "B1c" in regioes:
-            val = regioes["B2c"].fim - regioes["B1c"].fim
-        elif dist_nome == "F3_F2_gap" and "F2" in regioes and "F3" in regioes:
-            val = regioes["F2"].ini - regioes["F3"].fim
-        elif dist_nome == "B2c_B3c_gap" and "B3c" in regioes and "B2c" in regioes:
-            val = regioes["B3c"].ini - regioes["B2c"].fim
-        elif dist_nome == "F1_B1c_gap" and "B1c" in regioes and "F1" in regioes:
-            val = regioes["B1c"].ini - regioes["F1"].fim
-
-        if val is not None:
+        if dist_nome in dist_calculadas:
+            val = dist_calculadas[dist_nome]
+            d_min, d_max = float(faixa[0]), float(faixa[1])
             if val < d_min or val > d_max:
                 faixa_str = f"[{int(d_min)}, {int(d_max)}]"
                 violacoes.append(

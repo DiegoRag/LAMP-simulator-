@@ -1,10 +1,12 @@
 """Módulo de exportação de resultados em CSV e JSON."""
 
 import csv
+import hashlib
 import json
 from pathlib import Path
 import subprocess
 from primers.analise import Resultado
+from primers.desenho import AVISO, ResultadoDesenho
 from primers.termo import Condicoes
 
 COLUNAS_PRIMERS = [
@@ -136,6 +138,147 @@ def exportar(resultado: Resultado, pasta: str | Path, cfg: dict) -> None:
         "heterodimeros": resultado.heterodimeros,
         "violacoes": violacoes_json,
         "regioes": regioes_json,
+    }
+
+    caminho_json = pasta_p / "resultado.json"
+    with open(caminho_json, "w", encoding="utf-8") as f:
+        json.dump(dados, f, ensure_ascii=False, indent=2)
+
+
+COLUNAS_CONJUNTOS_DESENHO = [
+    "posicao",
+    "pontuacao",
+    "desvio_tm",
+    "pior_heterodimero_kcal",
+    "F3",
+    "B3",
+    "FIP",
+    "BIP",
+    "LF",
+    "LB",
+    "F1c",
+    "F2",
+    "B1c",
+    "B2",
+    "F3_ini",
+    "F3_fim",
+    "F2_ini",
+    "F2_fim",
+    "F1_ini",
+    "F1_fim",
+    "B1c_ini",
+    "B1c_fim",
+    "B2c_ini",
+    "B2c_fim",
+    "B3c_ini",
+    "B3c_fim",
+    "LF_ini",
+    "LF_fim",
+    "LB_ini",
+    "LB_fim",
+    "avisos",
+]
+
+
+def exportar_desenho(resultado: ResultadoDesenho, alvo: str, pasta: str | Path, cfg: dict) -> None:
+    """Exporta resultados do desenho de primers LAMP gerando conjuntos.csv e resultado.json."""
+    pasta_p = Path(pasta)
+    pasta_p.mkdir(parents=True, exist_ok=True)
+
+    # 1. conjuntos.csv
+    caminho_csv = pasta_p / "conjuntos.csv"
+    with open(caminho_csv, "w", encoding="utf-8", newline="") as f:
+        f.write(f"# {AVISO}\n")
+        writer = csv.writer(f, lineterminator="\n")
+        writer.writerow(COLUNAS_CONJUNTOS_DESENHO)
+        for c in resultado.conjuntos:
+            row = [
+                str(c.posicao),
+                f"{c.pontuacao:.2f}",
+                f"{c.desvio_tm:.2f}",
+                f"{c.pior_heterodimero_kcal:.2f}",
+                c.conjunto.F3,
+                c.conjunto.B3,
+                c.conjunto.FIP,
+                c.conjunto.BIP,
+                c.conjunto.LF or "",
+                c.conjunto.LB or "",
+                c.conjunto.F1c,
+                c.conjunto.F2,
+                c.conjunto.B1c,
+                c.conjunto.B2,
+            ]
+            for r_nome in ("F3", "F2", "F1", "B1c", "B2c", "B3c", "LF", "LB"):
+                if r_nome in c.regioes and c.regioes[r_nome] is not None:
+                    row.append(str(c.regioes[r_nome].ini))
+                    row.append(str(c.regioes[r_nome].fim))
+                else:
+                    row.append("")
+                    row.append("")
+            row.append("; ".join(c.avisos))
+            writer.writerow(row)
+
+    # 2. resultado.json
+    try:
+        repo_dir = Path(__file__).resolve().parents[2]
+        proc = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=repo_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if proc.returncode == 0 and proc.stdout.strip():
+            versao_codigo = proc.stdout.strip()
+        else:
+            versao_codigo = "desconhecida"
+    except Exception:
+        versao_codigo = "desconhecida"
+
+    conjuntos_json = []
+    for c in resultado.conjuntos:
+        primers_dict = {
+            "F3": c.conjunto.F3,
+            "B3": c.conjunto.B3,
+            "F2": c.conjunto.F2,
+            "F1c": c.conjunto.F1c,
+            "B2": c.conjunto.B2,
+            "B1c": c.conjunto.B1c,
+            "FIP": c.conjunto.FIP,
+            "BIP": c.conjunto.BIP,
+        }
+        if c.conjunto.LF is not None:
+            primers_dict["LF"] = c.conjunto.LF
+        if c.conjunto.LB is not None:
+            primers_dict["LB"] = c.conjunto.LB
+
+        regioes_dict = {}
+        for r_nome in ("F3", "F2", "F1", "B1c", "B2c", "B3c", "LF", "LB"):
+            if r_nome in c.regioes and c.regioes[r_nome] is not None:
+                regioes_dict[r_nome] = [c.regioes[r_nome].ini, c.regioes[r_nome].fim]
+
+        conjuntos_json.append(
+            {
+                "posicao": c.posicao,
+                "pontuacao": c.pontuacao,
+                "desvio_tm": c.desvio_tm,
+                "pior_heterodimero_kcal": c.pior_heterodimero_kcal,
+                "primers": primers_dict,
+                "regioes": regioes_dict,
+                "avisos": c.avisos,
+            }
+        )
+
+    dados = {
+        "versao_codigo": versao_codigo,
+        "aviso": AVISO,
+        "config": cfg,
+        "alvo": {
+            "comprimento": len(alvo),
+            "sha256": hashlib.sha256(alvo.encode("utf-8")).hexdigest(),
+        },
+        "estatisticas": resultado.estatisticas,
+        "conjuntos": conjuntos_json,
     }
 
     caminho_json = pasta_p / "resultado.json"
