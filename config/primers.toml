@@ -1,0 +1,47 @@
+[reacao]                    # condições para Tm e ΔG — PROVISÓRIAS
+na_mM   = 50.0              # mistura WarmStart é proprietária; conferir
+mg_mM   = 8.0               # típico de LAMP; conferir
+dntp_mM = 1.4               # conferir se é total ou por nucleotídeo
+temp_C  = 37.0              # temperatura de referência dos ΔG
+
+[concentracao_nM]           # artigo-base: razão 1:4:1 (1 µM F3/B3, 4 µM FIP/BIP, 1 µM FLP)
+externos = 200.0            # conferir se os valores do artigo são da mistura ou finais
+internos = 1600.0
+loops    = 400.0
+
+[comprimento]
+min = 18
+max = 25
+loop_min = 15
+loop_max = 25
+
+[gc_pct]                    # conferir
+min = 40.0
+max = 65.0
+
+[tm_c]                      # conferir
+F1c_B1c = [64.0, 66.0]
+F2_B2   = [59.0, 61.0]
+F3_B3   = [59.0, 61.0]
+loops   = [64.0, 66.0]
+
+[extremidade]               # conferir
+bases  = 6
+dg_max = -4.0               # kcal/mol; a extremidade deve ser AO MENOS tão estável quanto isto
+
+[distancias]                # nt, coordenadas da fita +; conferir
+F2_B2       = [120, 160]    # fim(B2c) - ini(F2)
+F2_F1       = [40, 60]      # ini(F1) - ini(F2)
+B1c_B2c     = [40, 60]      # fim(B2c) - fim(B1c)
+F3_F2_gap   = [0, 60]       # ini(F2) - fim(F3)
+B2c_B3c_gap = [0, 60]       # ini(B3c) - fim(B2c)
+F1_B1c_gap  = [0, 1000]     # ini(B1c) - fim(F1); sem sobreposição
+
+[dimeros]
+# v0 só REPORTA dímeros, não filtra. Limiar a definir com dado — não invente.
+
+[desenho]
+ligante              = ""
+candidatos_por_regiao = 200   # teto, para a busca combinatória não explodir
+conjuntos_examinados  = 200000
+n_resultados          = 5
