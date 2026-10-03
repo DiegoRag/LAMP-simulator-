@@ -38,4 +38,4 @@ Thumbs.db
 *.tar.gz
 
 # Entrada real (alvos, conjuntos de isolados) — nunca versionar (ADR-0013, regra 3)
-dados/
+/dados/
