@@ -1,6 +1,7 @@
 """Testes para o módulo de restrições de primers LAMP."""
 
 from pathlib import Path
+
 from primers.entrada import carregar_config, ler_alvo, ler_conjunto
 from primers.modelo import Regiao
 from primers.restricoes import localizar, verificar
@@ -8,12 +9,25 @@ from primers.restricoes import localizar, verificar
 DADOS = Path(__file__).parent / "dados"
 CONFIG = Path(__file__).parents[1] / "config" / "primers.toml"
 
+# conjunto_ok.csv foi montado na convenção antiga de Tm (1,6 µM, Mg 8 mM). Na convenção do
+# PrimerExplorer V5 (fase 3) suas Tm ficam abaixo das faixas e as pontas de F3 e F1c ficam fracas.
+TERMO_CONJUNTO_OK = {
+    ("F3", "tm_c"),
+    ("F3", "extremidade"),
+    ("B3", "tm_c"),
+    ("F2", "tm_c"),
+    ("F1c", "tm_c"),
+    ("F1c", "extremidade"),
+    ("B2", "tm_c"),
+    ("B1c", "tm_c"),
+}
+
 
 def test_conjunto_ok_sem_alvo():
     cfg = carregar_config(CONFIG)
     leitura = ler_conjunto(DADOS / "conjunto_ok.csv")
     violacoes = verificar(leitura.conjunto, None, cfg)
-    assert {(v.item, v.regra) for v in violacoes} == set()
+    assert {(v.item, v.regra) for v in violacoes} == TERMO_CONJUNTO_OK
 
 
 def test_conjunto_ok_com_alvo_ok():
@@ -22,7 +36,7 @@ def test_conjunto_ok_com_alvo_ok():
     alvo = ler_alvo(DADOS / "alvo_ok.fasta")
 
     violacoes = verificar(leitura.conjunto, alvo, cfg)
-    assert {(v.item, v.regra) for v in violacoes} == set()
+    assert {(v.item, v.regra) for v in violacoes} == TERMO_CONJUNTO_OK
 
     regioes, _ = localizar(leitura.conjunto, alvo)
     assert regioes["F3"] == Regiao(0, 21)
@@ -42,6 +56,12 @@ def test_conjunto_violacoes_sem_alvo():
         ("B1c", "extremidade"),
         ("B1c", "gc_pct"),
         ("B1c", "tm_c"),
+        ("B2", "tm_c"),
+        ("B3", "tm_c"),
+        ("F1c", "extremidade"),
+        ("F1c", "tm_c"),
+        ("F2", "tm_c"),
+        ("F3", "extremidade"),
         ("F3", "gc_pct"),
         ("F3", "tm_c"),
     }
@@ -54,8 +74,8 @@ def test_conjunto_ok_com_alvo_gap():
     alvo = ler_alvo(DADOS / "alvo_gap.fasta")
 
     violacoes = verificar(leitura.conjunto, alvo, cfg)
-    assert {(v.item, v.regra) for v in violacoes} == {("F3_F2_gap", "distancia")}
-    assert violacoes[0].valor == 70
+    assert {(v.item, v.regra) for v in violacoes} == TERMO_CONJUNTO_OK | {("F3_F2_gap", "distancia")}
+    assert next(v for v in violacoes if v.regra == "distancia").valor == 70
 
 
 def test_conjunto_ok_com_alvo_sem_f3():

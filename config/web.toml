@@ -1,0 +1,166 @@
+# Interface web local do lamp-sim (src/interface). Só escuta nesta máquina: sequência de
+# isolado clínico não sai dela (ADR-0013, regra 3).
+
+[servidor]
+# só esta máquina; não troque por 0.0.0.0
+host  = "127.0.0.1"
+porta = 8000
+
+[entrada]
+# maior arquivo aceito no envio; o genoma AP018671.1 tem cerca de 5.500 KB
+tamanho_max_kb      = 8192
+# acima disso o desenho fica lento demais para a interface
+alvo_desenho_max_pb = 2000
+
+[analise]
+# enquanto as faixas de Tm não forem calibradas, Tm fora da faixa aparece como "a calibrar"
+tm_como_calibracao = true
+
+[heterodimeros]
+# limites das 5 faixas de cor da matriz de heterodímeros; só visual
+escala_kcal = [-10.0, -8.0, -6.0, -4.0]
+
+# Exemplos para o botão "Carregar exemplo". Caminhos relativos à raiz; só
+# aparece o exemplo cujos dois arquivos existem (dados/ fica fora do Git).
+[[exemplos]]
+nome     = "fosA.1 × fosA6"
+conjunto = "dados/fosA1_partes.csv"
+alvo     = "dados/alvo_fosA6_AP018671.fasta"
+
+[[exemplos]]
+nome     = "conjunto_ok — sintético"
+conjunto = "tests/dados/conjunto_ok.csv"
+alvo     = "tests/dados/alvo_ok.fasta"
+
+[carregamento]
+# tela de espera: tempo mínimo na tela, em milissegundos, mesmo que o servidor responda
+# antes; 0 deixa só o tempo real do processamento
+analise_ms = 2600
+desenho_ms = 3200
+envio_ms   = 900
+
+[tubos]
+# página /tubos: tempos em minutos de reação; a reprodução acelera pelo fator de velocidade
+duracao_min     = 30      # janela mostrada ao abrir a página
+duracao_max_min = 60      # até onde a simulação vai; teto do campo de duração
+passo_min       = 0.5     # passo da simulação e do cursor
+velocidade      = 60      # na reprodução, 1 s de tela = 60 s de reação (30 min em 30 s)
+velocidades     = [30, 60, 120, 300]
+semente         = 2026    # sorteio do mix e das cópias de cada tubo: mesma semente, mesmos tubos
+
+# Série simulada com o conjunto analisado: diluições do alvo e os dois controles.
+# copias = média de cópias de molde por tubo (o lampsim sorteia o número real por Poisson).
+[[tubos.serie]]
+nome   = "10⁶ cópias"
+copias = 1000000
+papel  = "amostra"
+
+[[tubos.serie]]
+nome   = "10⁵ cópias"
+copias = 100000
+papel  = "amostra"
+
+[[tubos.serie]]
+nome   = "10⁴ cópias"
+copias = 10000
+papel  = "amostra"
+
+[[tubos.serie]]
+nome   = "10³ cópias"
+copias = 1000
+papel  = "amostra"
+
+[[tubos.serie]]
+nome   = "100 cópias"
+copias = 100
+papel  = "amostra"
+
+[[tubos.serie]]
+nome   = "10 cópias"
+copias = 10
+papel  = "amostra"
+
+[[tubos.serie]]
+nome   = "1 cópia"
+copias = 1
+papel  = "amostra"
+
+[[tubos.serie]]
+nome   = "Controle negativo"
+copias = 0
+papel  = "controle_negativo"
+
+[[tubos.serie]]
+nome       = "Controle positivo"
+copias     = 100000
+papel      = "controle_positivo"
+eficiencia = 1.0          # molde próprio, que casa com o conjunto
+
+# Curvas manuais (modo opcional, sempre com aviso): não vêm do conjunto nem do simulador.
+# A cor sai do modelo do lampsim: progresso p -> pH = ph_inicial - queda_ph · p.
+[tubos.manual]
+ph_inicial = 8.7
+queda_ph   = 2.4
+
+[[tubos.exemplares]]
+nome = "Amostra 1"
+curva = "linear"
+inicio = 0.0
+duracao = 30.0
+alcance = 100
+
+[[tubos.exemplares]]
+nome = "Amostra 2"
+curva = "sigmoide"
+inicio = 24.0
+duracao = 6.0
+alcance = 100
+
+[[tubos.exemplares]]
+nome = "Amostra 3"
+curva = "sigmoide"
+inicio = 8.0
+duracao = 12.0
+alcance = 100
+
+[[tubos.exemplares]]
+nome = "Amostra 4"
+curva = "sigmoide"
+inicio = 16.0
+duracao = 8.0
+alcance = 100
+
+[[tubos.exemplares]]
+nome = "Amostra 5"
+curva = "linear"
+inicio = 10.0
+duracao = 20.0
+alcance = 100
+
+[[tubos.exemplares]]
+nome = "Amostra 6"
+curva = "sigmoide"
+inicio = 4.0
+duracao = 6.0
+alcance = 100
+
+[[tubos.exemplares]]
+nome = "Amostra 7"
+curva = "sigmoide"
+inicio = 18.0
+duracao = 12.0
+alcance = 60
+
+[[tubos.exemplares]]
+nome = "Amostra 8"
+curva = "linear"
+inicio = 0.0
+duracao = 30.0
+alcance = 0
+
+[[tubos.exemplares]]
+nome = "Referência"
+curva = "linear"
+inicio = 0.0
+duracao = 30.0
+alcance = 0

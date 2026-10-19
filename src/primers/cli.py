@@ -1,12 +1,14 @@
 """Interface de linha de comando (CLI) para primers LAMP."""
 
 import argparse
-from pathlib import Path
 import sys
+import unicodedata
+from pathlib import Path
+
 from primers.analise import analisar
 from primers.desenho import AVISO_ASCII, desenhar
-from primers.entrada import carregar_config, ler_alvo, ler_conjunto
-from primers.saida import exportar, exportar_desenho
+from primers.entrada import carregar_config, escolher_registro_alvo, ler_alvo, ler_alvos, ler_conjunto
+from primers.saida import descrever_alvo, exportar, exportar_desenho
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -28,6 +30,11 @@ def main(argv: list[str] | None = None) -> int:
     p_desenhar.add_argument("--config", default="config/primers.toml", help="Caminho para primers.toml.")
     p_desenhar.add_argument("--n", type=int, default=None, help="Numero maximo de conjuntos a devolver.")
     p_desenhar.add_argument("--saida", required=True, help="Pasta de saida (dentro de saida/).")
+    p_desenhar.add_argument(
+        "--relaxado",
+        action="store_true",
+        help="Usa as faixas de [desenho_relaxado] do config (GC e Tm alargadas, fora do guia).",
+    )
 
     args = parser.parse_args(argv)
 
@@ -49,14 +56,32 @@ def main(argv: list[str] | None = None) -> int:
     if args.subcomando == "analisar":
         try:
             cfg = carregar_config(args.config)
-            alvo = ler_alvo(args.alvo) if args.alvo else None
-            leitura = ler_conjunto(args.entrada, alvo=alvo)
+            registro_alvo = escolher_registro_alvo(ler_alvos(args.alvo)) if args.alvo else None
+            alvo = registro_alvo.sequencia if registro_alvo is not None else None
+            ligante_cfg = cfg.get("desenho", {}).get("ligante", "")
+            max_erros_cfg = int(cfg.get("casamento", {}).get("max_erros", 3))
+            circular_cfg = bool(cfg.get("alvo", {}).get("circular", False))
+            leitura = ler_conjunto(
+                args.entrada,
+                alvo=alvo,
+                ligante=ligante_cfg,
+                max_erros=max_erros_cfg,
+                circular=circular_cfg,
+            )
         except ValueError as e:
             sys.stderr.write(f"erro: {e}\n")
             return 2
 
         resultado = analisar(leitura, alvo, cfg)
-        exportar(resultado, args.saida, cfg)
+        alvo_json = None
+        if registro_alvo is not None:
+            alvo_json = descrever_alvo(
+                registro_alvo.sequencia,
+                id_registro=registro_alvo.id,
+                arquivo=Path(args.alvo).name,
+                circular=circular_cfg,
+            )
+        exportar(resultado, args.saida, cfg, leitura=leitura, alvo=alvo_json)
 
         print(
             f"Analise concluida: {len(resultado.linhas)} primers, "
@@ -72,7 +97,7 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write(f"erro: {e}\n")
         return 2
 
-    resultado_desenho = desenhar(alvo, cfg, n=args.n)
+    resultado_desenho = desenhar(alvo, cfg, n=args.n, relaxado=args.relaxado)
     exportar_desenho(resultado_desenho, alvo, args.saida, cfg)
 
     print(AVISO_ASCII)
@@ -81,7 +106,15 @@ def main(argv: list[str] | None = None) -> int:
     print(
         f"Conjuntos: {len(resultado_desenho.conjuntos)}, "
         f"candidatos por tipo: [{cands_str}], "
-        f"examinados: {stats['conjuntos_examinados']}, "
-        f"busca truncada: {stats['busca_truncada']}."
+        f"nucleos examinados: {stats['conjuntos_examinados']}, "
+        f"nucleos distintos: {stats['nucleos_distintos']}, "
+        f"faixas relaxadas: {stats['relaxado']}."
     )
+    if stats["diagnostico"]:
+        print(f"Diagnostico: {_ascii(stats['diagnostico'])}")
     return 0
+
+
+def _ascii(texto: str) -> str:
+    """Texto sem acentos, para consoles que não mostram UTF-8 (como o AVISO_ASCII)."""
+    return unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode("ascii")

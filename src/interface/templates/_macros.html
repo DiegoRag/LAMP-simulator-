@@ -1,0 +1,25 @@
+{%- macro familia(nome, lado="") -%}
+  {%- set n = (nome or "")|trim|upper -%}
+  {%- set prim = n.split()[0] if n else "" -%}
+  {%- if n in ["F3", "B3", "B3C"] or prim in ["F3", "B3", "B3C"] -%}
+    externo
+  {%- elif n in ["FIP", "F2", "F1C", "F1"] or prim in ["FIP", "F2", "F1C", "F1"] -%}
+    fip
+  {%- elif n in ["BIP", "B1C", "B2", "B2C"] or prim in ["BIP", "B1C", "B2", "B2C"] -%}
+    bip
+  {%- elif n in ["LF", "LB"] or prim in ["LF", "LB"] -%}
+    loop
+  {%- elif lado|upper == "F" -%}
+    fip
+  {%- elif lado|upper == "B" -%}
+    bip
+  {%- elif lado|upper == "L" -%}
+    loop
+  {%- else -%}
+    outro
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- macro etiqueta(texto, lado="", nome=none) -%}
+  <span class="etiqueta etiqueta-{{ familia(nome or texto, lado) }}">{{ texto }}</span>
+{%- endmacro -%}

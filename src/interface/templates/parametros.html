@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block titulo %}LAMP Primers — Parâmetros{% endblock %}
+
+{% block conteudo %}
+{% import "_macros.html" as m %}
+<header class="cabecalho-pagina">
+  <div class="cabecalho-pagina-texto">
+    <h1 class="titulo-pagina">Parâmetros <span class="titulo-tag">e calibração</span></h1>
+    <p class="subtitulo-pagina">Valores de <code class="mono">{{ tela.config }}</code>, versionados com o código e somente leitura nesta versão. Os marcados <span class="chip-marca">conferir</span> vêm do guia de desenho da Eiken (PrimerExplorer) e ainda não foram conferidos no documento original.</p>
+  </div>
+</header>
+
+<section class="secao" aria-labelledby="t-cal">
+  <div class="secao-cabecalho">
+    <h2 id="t-cal" class="secao-titulo">{% if tela.referencia %}Tm de {{ tela.referencia.rotulo }} contra as faixas do guia{% else %}Tm contra as faixas do guia{% endif %}</h2>
+    <span class="pilula pilula-ok">Opção A adotada</span>
+    {% if tela.tm_a_calibrar %}<span class="pilula pilula-calibrar">faixas a calibrar</span>{% endif %}
+  </div>
+
+  {% if not tela.calibracao %}
+    <p class="texto-vazio">Analise um conjunto para comparar as Tm medidas com as faixas. <a href="/">Ir para Início</a></p>
+  {% else %}
+    <div class="cal-legenda">
+      <span class="cal-legenda-item"><span class="amostra-banda"></span>Faixa do guia</span>
+      <span class="cal-legenda-item"><span class="ponto-amostra ponto-atual"></span>Tm de referência (PrimerExplorer V5)</span>
+      <span class="cal-legenda-item"><span class="ponto-amostra ponto-total"></span>Tm da reação (informativa)</span>
+      <span class="cal-legenda-item"><span class="ponto-amostra ponto-lado-b"></span>primers do lado B</span>
+    </div>
+
+    <div class="cal-grafico" data-encaixe role="img" aria-label="{{ tela.calibracao.descricao }}">
+      {% for l in tela.calibracao.linhas %}
+        {% set d = "%.2f"|format(loop.index0 * 0.12) %}
+        <div class="cal-linha" style="--d: {{ d }}s">
+          <div class="cal-linha-info">
+            <span class="cal-linha-nome">{{ l.nome }}</span>
+            <span class="cal-linha-sub">faixa {{ l.faixa }} °C · {{ l.conc }} na reação{% if l.marca %} <span class="chip-marca">{{ l.marca }}</span>{% endif %}</span>
+          </div>
+          <div class="cal-trilho">
+            <div class="cal-banda" style="left: {{ l.banda_esquerda }}%; width: {{ l.banda_largura }}%;"></div>
+            {% for p in l.pontos %}
+              <span class="cal-ponto cal-ponto-{{ p.lado }} {% if p.cheio %}cal-ponto-cheio{% else %}cal-ponto-vazio{% endif %}" style="left: {{ p.esquerda }}%;"></span>
+              {% if p.rotulo %}
+                <span class="cal-ponto-rotulo cal-ponto-rotulo-{{ p.lado }}" style="left: {{ p.esquerda }}%;">{{ p.nome }}</span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+      <div class="cal-linha cal-linha-ticks">
+        <div class="cal-linha-info"></div>
+        <div class="cal-trilho-ticks">
+          {% for t in tela.calibracao.ticks %}
+            <span class="cal-tick cal-tick-{{ t.alinhamento }}" style="left: {{ t.esquerda }}%;">{{ t.valor }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <p class="cal-texto">{{ tela.calibracao.texto }}</p>
+
+    <p class="nota">Opção A adotada: as faixas da Eiken valem na convenção do PrimerExplorer V5 (oligo {{ tela.reacao[4].valor }}), que o projeto reproduz; a Tm da reação é só informativa.</p>
+
+    <div class="aviso aviso-info" role="note">
+      <svg class="aviso-icone" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M12 11v6"></path>
+        <circle cx="12" cy="7.5" r="0.9" fill="currentColor"></circle>
+      </svg>
+      <div class="aviso-texto">
+        <p><strong>Antes de mudar qualquer faixa:</strong> os testes do primers usam valores calculados com este config. Congelar um config só para os testes evita que a calibração quebre testes que não têm erro.</p>
+      </div>
+    </div>
+  {% endif %}
+</section>
+
+<div class="colunas-2 parametros-grade">
+  <section class="secao" aria-labelledby="t-reac">
+    <div class="secao-cabecalho">
+      <h2 id="t-reac" class="secao-titulo">Condições de reação</h2>
+    </div>
+    <dl class="lista-def">
+      {% for r in tela.reacao %}
+        <div class="lista-def-item">
+          <dt>{{ r.nome }}</dt>
+          <dd class="lista-def-valor">{{ r.valor }}</dd>
+          {% if r.nota %}
+            <dd class="lista-def-nota{% if r.destaque %} lista-def-destaque{% endif %}">{{ r.nota }}</dd>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </dl>
+  </section>
+
+  <section class="secao" aria-labelledby="t-dist">
+    <div class="secao-cabecalho">
+      <h2 id="t-dist" class="secao-titulo">Distâncias entre regiões</h2>
+    </div>
+    <div class="tabela-rolagem" tabindex="0" role="region" aria-label="Tabela das distâncias do config">
+      <table class="tabela tabela-estreita">
+        <thead>
+          <tr>
+            <th scope="col">Distância</th>
+            <th scope="col" class="num">Faixa</th>
+            <th scope="col" class="num">{% if tela.referencia %}<span class="nc">{{ tela.referencia.rotulo }}</span>{% else %}Referência{% endif %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in tela.distancias %}
+            <tr>
+              <td class="mono">{{ d.nome }}</td>
+              <td class="num secundario">{{ d.faixa }}</td>
+              <td class="num{% if d.dentro is sameas true %} ok{% elif d.dentro is sameas false %} viol{% else %} secundario{% endif %}">
+                {{ d.valor }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="nota">Em nt, na fita em que o conjunto foi localizado. Um conjunto real fora da faixa é argumento para revisar a faixa, não o conjunto.</p>
+  </section>
+
+  <section class="secao" aria-labelledby="t-regras">
+    <div class="secao-cabecalho">
+      <h2 id="t-regras" class="secao-titulo">Regras por primer</h2>
+    </div>
+    <dl class="lista-def">
+      {% for r in tela.regras %}
+        <div class="lista-def-item">
+          <dt>{{ r.nome }}</dt>
+          <dd class="lista-def-valor">
+            {{ r.valor }}
+            {% if r.marca %}<span class="chip-marca">{{ r.marca }}</span>{% endif %}
+          </dd>
+        </div>
+      {% endfor %}
+    </dl>
+  </section>
+
+  <section class="secao" aria-labelledby="t-desenho">
+    <div class="secao-cabecalho">
+      <h2 id="t-desenho" class="secao-titulo">Desenho</h2>
+    </div>
+    <dl class="lista-def">
+      {% for d in tela.desenho %}
+        <div class="lista-def-item">
+          <dt>{{ d.nome }}</dt>
+          <dd class="lista-def-valor">
+            {{ d.valor }}
+            {% if d.marca %}<span class="chip-marca">{{ d.marca }}</span>{% endif %}
+          </dd>
+        </div>
+      {% endfor %}
+    </dl>
+  </section>
+</div>
+{% endblock %}

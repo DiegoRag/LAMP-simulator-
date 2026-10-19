@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block titulo %}LAMP Primers — Início{% endblock %}
+
+{% block conteudo %}
+{% import "_macros.html" as m %}
+<section class="abertura" aria-labelledby="t-abertura">
+  <p class="abertura-chamada">Projeto LAMP · Senac + FMABC</p>
+  <h1 id="t-abertura" class="abertura-titulo">Do alvo ao conjunto<span class="ponto-laranja">.</span></h1>
+  <p class="abertura-texto">Analise um conjunto de primers LAMP contra a sequência-alvo, ou desenhe conjuntos novos a partir dela.</p>
+  <div class="abertura-helice">
+    <canvas class="helice" data-helice="anatomia" role="img" aria-label="Esquema das oito regiões de um conjunto LAMP sobre a fita-alvo: F3, F2, LF, F1, B1c, LB, B2c e B3c."></canvas>
+  </div>
+  <p class="abertura-legenda" aria-hidden="true">As oito regiões de um conjunto LAMP sobre a fita-alvo</p>
+  {% if tela.exemplos %}
+    <div class="abertura-exemplos">
+      <span class="abertura-exemplos-rotulo">Experimente com um exemplo:</span>
+      {% for nome in tela.exemplos %}
+        <form class="form-inline" method="post" action="/exemplo" data-carregar="envio" data-titulo="Exemplo" data-tag="{{ nome }}">
+          <input type="hidden" name="nome" value="{{ nome }}">
+          <button class="botao botao-secundario botao-pequeno" type="submit">{{ nome }}</button>
+        </form>
+      {% endfor %}
+    </div>
+  {% endif %}
+</section>
+
+<div class="colunas-2 cargas">
+  <section class="carga" aria-labelledby="t-conj">
+    <div class="carga-cabecalho">
+      <h2 id="t-conj" class="secao-titulo">Conjunto de primers</h2>
+      {% if tela.conjunto %}
+        <span class="pilula pilula-ok">Carregado</span>
+      {% else %}
+        <span class="pilula pilula-neutro">Não carregado</span>
+      {% endif %}
+    </div>
+    <p class="carga-desc">CSV com cabeçalho <code class="mono">nome,sequencia</code> ou FASTA com um registro por primer, sempre 5′→3′.</p>
+
+    {% if tela.conjunto %}
+      <div class="arquivo-carregado">
+        <svg class="arquivo-icone" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path>
+          <path d="M14 3v5h5"></path>
+        </svg>
+        <div class="arquivo-info">
+          <span class="arquivo-nome">{{ tela.conjunto.nome_arquivo }}</span>
+          <span class="arquivo-resumo">{{ tela.conjunto.resumo }}</span>
+        </div>
+      </div>
+
+      {% if tela.conjunto.reconhecidos %}
+        <div class="reconhecidos">
+          <span class="rotulo-pequeno">Reconhecidos</span>
+          <div class="etiquetas" data-revelar data-revelar-passo="0.04">
+            {% for r in tela.conjunto.reconhecidos %}
+              {{ m.etiqueta(r.texto, r.lado, r.texto.split(" ")[0]) }}
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      {% if tela.conjunto.avisos %}
+        <div class="aviso aviso-alerta" role="note">
+          <svg class="aviso-icone" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3l10 18H2z"></path>
+            <path d="M12 10v5"></path>
+            <circle cx="12" cy="18" r="0.9" fill="currentColor"></circle>
+          </svg>
+          <div class="aviso-texto">
+            <ul class="lista-avisos">
+              {% for av in tela.conjunto.avisos %}
+                <li>{{ av }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      {% endif %}
+    {% endif %}
+
+    <form class="form-arquivo" method="post" action="/conjunto" enctype="multipart/form-data" data-carregar="envio" data-titulo="Conjunto de primers" data-tag="">
+      <label class="form-arquivo-rotulo" for="arquivo-conjunto">
+        {% if tela.conjunto %}Trocar arquivo{% else %}Enviar conjunto{% endif %}
+      </label>
+      <div class="form-arquivo-linha">
+        <label class="botao botao-secundario botao-arquivo" for="arquivo-conjunto">
+          Escolher arquivo
+          <input class="input-arquivo-oculto" type="file" id="arquivo-conjunto" name="arquivo" accept=".csv,.fasta,.fa,.fna">
+        </label>
+        <span class="arquivo-escolhido" data-nome-arquivo>Nenhum arquivo escolhido</span>
+        <button class="botao botao-secundario" type="submit">Enviar</button>
+      </div>
+    </form>
+
+    <p class="carga-nota">Se o FIP ou o BIP vier inteiro, as partes são separadas pelo alvo. Quando o corte é ambíguo, a ferramenta avisa e lista as alternativas — informe as partes para eliminar a dúvida.</p>
+  </section>
+
+  <section class="carga" aria-labelledby="t-alvo">
+    <div class="carga-cabecalho">
+      <h2 id="t-alvo" class="secao-titulo">Sequência-alvo</h2>
+      {% if tela.alvo %}
+        <span class="pilula pilula-ok">Carregada</span>
+      {% else %}
+        <span class="pilula pilula-neutro">Não carregada</span>
+      {% endif %}
+    </div>
+    <p class="carga-desc">FASTA com um único registro. Obrigatória para desenhar; na análise, habilita a localização das regiões e as distâncias.</p>
+
+    {% if tela.alvo %}
+      <div class="arquivo-carregado">
+        <svg class="arquivo-icone" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"></path>
+          <path d="M14 3v5h5"></path>
+        </svg>
+        <div class="arquivo-info">
+          <span class="arquivo-nome">{{ tela.alvo.nome_arquivo }}</span>
+          <span class="arquivo-resumo">{{ tela.alvo.resumo }}</span>
+        </div>
+      </div>
+
+      <dl class="lista-def">
+        <div class="lista-def-item">
+          <dt>Cabeçalho</dt>
+          <dd class="lista-def-valor mono">{{ tela.alvo.cabecalho }}</dd>
+        </div>
+      </dl>
+    {% endif %}
+
+    <form class="form-arquivo" method="post" action="/alvo" enctype="multipart/form-data" data-carregar="envio" data-titulo="Sequência-alvo" data-tag="">
+      <label class="form-arquivo-rotulo" for="arquivo-alvo">
+        {% if tela.alvo %}Trocar arquivo{% else %}Enviar alvo{% endif %}
+      </label>
+      <div class="form-arquivo-linha">
+        <label class="botao botao-secundario botao-arquivo" for="arquivo-alvo">
+          Escolher arquivo
+          <input class="input-arquivo-oculto" type="file" id="arquivo-alvo" name="arquivo" accept=".fasta,.fa,.fna">
+        </label>
+        <span class="arquivo-escolhido" data-nome-arquivo>Nenhum arquivo escolhido</span>
+        <button class="botao botao-secundario" type="submit">Enviar</button>
+      </div>
+    </form>
+
+    <div class="area-desativada" aria-disabled="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 16V4M7 9l5-5 5 5"></path>
+        <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"></path>
+      </svg>
+      <span>Comparar alelos com outro FASTA — chega com o casamento por alelo</span>
+    </div>
+  </section>
+</div>
+
+<div class="acoes-principais">
+  <form class="form-inline" method="post" action="/analisar" data-carregar="analise" data-titulo="Análise" data-tag="{{ base.projeto }}">
+    <button class="botao botao-primario botao-grande" type="submit"{% if not tela.pode_analisar %} disabled{% endif %}>Analisar conjunto</button>
+  </form>
+  <form class="form-inline" method="post" action="/desenhar" data-carregar="desenho" data-titulo="Desenho" data-tag="{% if tela.alvo %}{{ tela.alvo.nome_arquivo }}{% endif %}">
+    <button class="botao botao-secundario botao-grande" type="submit"{% if not tela.pode_desenhar %} disabled{% endif %}>Desenhar a partir do alvo</button>
+  </form>
+  {% if tela.motivo_sem_desenho %}
+    <span class="acoes-motivo">{{ tela.motivo_sem_desenho }}</span>
+  {% endif %}
+</div>
+
+<div class="aviso aviso-seguranca" role="note">
+  <svg class="aviso-icone" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path>
+    <path d="M8.5 12l2.5 2.5 4.5-5"></path>
+  </svg>
+  <div class="aviso-texto">
+    <p><strong>Nenhuma sequência sai desta máquina.</strong> A interface só escuta em 127.0.0.1 e guarda os arquivos em memória, até o servidor parar. Entrada real fica em <code class="mono">dados/</code>, fora do Git (ADR-0013, regra 3).</p>
+  </div>
+</div>
+
+<section class="secao" aria-labelledby="t-hist">
+  <div class="secao-cabecalho">
+    <h2 id="t-hist" class="secao-titulo">Execuções desta sessão</h2>
+  </div>
+  {% if tela.historico %}
+    <div class="tabela-rolagem" tabindex="0" role="region" aria-label="Tabela das execuções desta sessão">
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th scope="col">Tipo</th>
+            <th scope="col">Conjunto</th>
+            <th scope="col">Alvo</th>
+            <th scope="col">Resultado</th>
+            <th scope="col">Data</th>
+            <th scope="col"><span class="sr-only">Ação</span></th>
+          </tr>
+        </thead>
+        <tbody data-revelar>
+          {% for r in tela.historico %}
+            <tr>
+              <td><strong>{{ r.tipo }}</strong></td>
+              <td>{{ r.conjunto }}</td>
+              <td>{{ r.alvo }}</td>
+              <td><span class="pilula pilula-{{ r.resultado_tipo }}">{{ r.resultado }}</span></td>
+              <td class="data">{{ r.data }}</td>
+              <td class="num"><a class="link-acao" href="{{ r.href }}" aria-label="Abrir {{ r.tipo }} de {{ r.data }}">Abrir</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="texto-vazio">Nenhuma execução ainda. Carregue um conjunto ou um alvo e escolha Analisar ou Desenhar.</p>
+  {% endif %}
+</section>
+{% endblock %}

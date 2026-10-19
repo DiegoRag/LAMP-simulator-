@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block titulo %}LAMP Primers — Análise{% endblock %}
+
+{% block conteudo %}
+{% import "_macros.html" as m %}
+<header class="cabecalho-pagina">
+  <div class="cabecalho-pagina-texto">
+    <h1 class="titulo-pagina">Análise <span class="titulo-tag">{{ tela.titulo }}</span></h1>
+    <p class="subtitulo-pagina">{{ tela.subtitulo }}</p>
+  </div>
+  <div class="cabecalho-pagina-acoes">
+    <a class="botao botao-secundario" href="/analise/{{ tela.id }}/exportar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 4v12M7 11l5 5 5-5"></path>
+        <path d="M4 20h16"></path>
+      </svg>
+      Exportar resultados
+    </a>
+    {% if tela.url_tubos %}
+      <a class="botao botao-secundario" href="{{ tela.url_tubos }}">Ver nos tubos</a>
+    {% endif %}
+    {% if tela.pode_desenhar %}
+      <form class="form-inline" method="post" action="/desenhar" data-carregar="desenho" data-titulo="Desenho" data-tag="{{ base.projeto }}">
+        <button class="botao botao-primario" type="submit">Desenhar alternativas</button>
+      </form>
+    {% endif %}
+  </div>
+</header>
+
+{% if tela.avisos %}
+  <div class="aviso aviso-alerta" role="note">
+    <svg class="aviso-icone" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 3l10 18H2z"></path>
+      <path d="M12 10v5"></path>
+      <circle cx="12" cy="18" r="0.9" fill="currentColor"></circle>
+    </svg>
+    <div class="aviso-texto">
+      <ul class="lista-avisos">
+        {% for av in tela.avisos %}
+          <li>{{ av }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+{% endif %}
+
+<div class="medidas" data-revelar data-revelar-passo="0.1">
+  {% for k in tela.kpis %}
+    <div class="medida{% if k.tipo == 'viol' %} medida-tem-viol{% elif k.tipo == 'calibrar' %} medida-tem-calibrar{% endif %}">
+      {% set partes = k.valor.split(" ", 1) %}
+      <span class="medida-linha">
+        <span class="medida-valor{% if k.tipo == 'viol' %} medida-viol{% elif k.tipo == 'calibrar' %} medida-calibrar{% endif %}" data-contar>{{ partes[0] }}</span>
+        {% if partes|length > 1 %}<span class="medida-resto">{{ partes[1] }}</span>{% endif %}
+      </span>
+      <span class="medida-rotulo">{{ k.rotulo }}</span>
+      {% if k.detalhe %}
+        <span class="medida-detalhe">{{ k.detalhe }}</span>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+
+{% if tela.aviso_calibracao %}
+  <div class="aviso aviso-alerta aviso-calibracao" role="note">
+    <svg class="aviso-icone" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 3l10 18H2z"></path>
+      <path d="M12 10v5"></path>
+      <circle cx="12" cy="18" r="0.9" fill="currentColor"></circle>
+    </svg>
+    <div class="aviso-texto">
+      {% set partes = tela.aviso_calibracao.split(". ", 1) %}
+      <p><b>{{ partes[0] }}.</b>{% if partes|length > 1 %} {{ partes[1] }}{% endif %}</p>
+      <p class="aviso-links">
+        <a href="/parametros">Ver a calibração em Parâmetros</a>
+        <a href="{{ tela.href_alternar_calibracao }}">{{ tela.rotulo_alternar_calibracao }}</a>
+      </p>
+    </div>
+  </div>
+{% else %}
+  <p class="linha-alternar">
+    <a href="{{ tela.href_alternar_calibracao }}">{{ tela.rotulo_alternar_calibracao }}</a>
+  </p>
+{% endif %}
+
+<section class="secao" aria-labelledby="t-mapa">
+  <div class="secao-cabecalho">
+    <h2 id="t-mapa" class="secao-titulo">Regiões no alvo</h2>
+    {% if tela.mapa %}
+      <p class="secao-legenda">{{ tela.mapa.legenda }}</p>
+    {% endif %}
+  </div>
+
+  {% if tela.mapa %}
+    <div class="analise-helice">
+      <canvas class="helice" data-helice="dados" data-comprimento="{{ tela.mapa.comprimento }}" data-regioes='{{ tela.mapa.segmentos|tojson }}' role="img" aria-label="{{ tela.mapa.descricao }}"></canvas>
+    </div>
+    <p class="analise-helice-legenda" aria-hidden="true">Posições proporcionais ao alvo de {{ tela.mapa.comprimento }} pb; a hélice não está em escala.</p>
+
+    <div class="mapa{% if tela.mapa.faixas_fora %} mapa-com-fora{% endif %}" data-encaixe role="img" aria-label="{{ tela.mapa.descricao }}">
+      <div class="mapa-trilho"></div>
+      {% for s in tela.mapa.segmentos %}
+        {% set d = "%.2f"|format(loop.index0 * 0.09) %}
+        {% set fam = m.familia(s.regiao)|trim %}
+        <div class="mapa-regiao mapa-regiao-{{ s.regiao }} mapa-familia-{{ fam }}{% if s.fantasma %} mapa-fantasma{% endif %}" style="left: {{ s.esquerda }}%; width: {{ s.largura }}%; --d: {{ d }}s"></div>
+        <span class="mapa-rotulo mapa-familia-{{ fam }}{% if loop.index0 % 2 == 0 %} mapa-rotulo-cima{% else %} mapa-rotulo-baixo{% endif %}{% if s.fantasma %} mapa-rotulo-fantasma{% endif %}" style="left: calc({{ s.esquerda }}% + {{ s.largura }}% / 2); --d: {{ d }}s">{{ s.nome }}</span>
+      {% endfor %}
+      {% for t in tela.mapa.ticks %}
+        <div class="mapa-marca" style="left: {{ t.esquerda }}%"></div>
+        <span class="mapa-numero mapa-numero-{{ t.alinhamento }}" style="left: {{ t.esquerda }}%">{{ t.valor }}</span>
+      {% endfor %}
+      {% for f in tela.mapa.faixas_fora %}
+        <div class="mapa-fora" style="left: {{ f.esquerda }}%; width: {{ f.largura }}%"></div>
+        <span class="mapa-fora-texto" style="left: {{ f.esquerda }}%">{{ f.texto }}</span>
+      {% endfor %}
+    </div>
+
+    <div class="tabela-rolagem" tabindex="0" role="region" aria-label="Tabela das distâncias entre regiões">
+      <table class="tabela">
+        <thead>
+          <tr>
+            <th scope="col">Distância</th>
+            <th scope="col" class="num">Medida</th>
+            <th scope="col" class="num">Faixa</th>
+            <th scope="col"><span class="sr-only">Medida dentro da faixa</span></th>
+            <th scope="col">Situação</th>
+          </tr>
+        </thead>
+        <tbody data-revelar>
+          {% for d in tela.distancias %}
+            <tr>
+              <td class="mono">{{ d.nome }}</td>
+              <td class="num"><strong>{{ d.medida }} nt</strong></td>
+              <td class="num secundario">{{ d.faixa }}</td>
+              <td class="celula-regua">
+                <span class="regua-mini" aria-hidden="true">
+                  {% if d.regua.zero %}<span class="regua-mini-zero" style="left: {{ d.regua.zero }}%"></span>{% endif %}
+                  <span class="regua-mini-banda" style="left: {{ d.regua.banda_esquerda }}%; width: {{ d.regua.banda_largura }}%"></span>
+                  <span class="regua-mini-marca {% if d.dentro %}regua-mini-ok{% else %}regua-mini-viol{% endif %}" style="left: {{ d.regua.marca }}%"></span>
+                </span>
+              </td>
+              <td>
+                {% if d.dentro %}
+                  <span class="pilula pilula-ok">dentro</span>
+                {% else %}
+                  <span class="pilula pilula-viol">{{ d.texto }}</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="texto-vazio">Sem alvo: carregue a sequência-alvo para localizar as regiões e medir as distâncias.</p>
+  {% endif %}
+</section>
+
+<section class="secao" aria-labelledby="t-prim">
+  <div class="secao-cabecalho">
+    <h2 id="t-prim" class="secao-titulo">Primers</h2>
+    <p class="secao-legenda">Tm na convenção do PrimerExplorer V5, a das faixas da Eiken · Tm da reação só informativa (F1c e B1c como dobramento) · ΔG de ponta a 37 °C · grampo e homodímero na temperatura da reação</p>
+  </div>
+
+  <div class="tabela-rolagem" tabindex="0" role="region" aria-label="Tabela dos primers">
+    <table class="tabela tabela-primers">
+      <thead>
+        <tr>
+          <th scope="col">Primer</th>
+          <th scope="col">Sequência 5′→3′</th>
+          <th scope="col">Região</th>
+          <th scope="col" class="num"><span class="nc">nt</span></th>
+          <th scope="col" class="num">GC %</th>
+          <th scope="col" class="num"><span class="nc">Tm</span> °C</th>
+          <th scope="col" class="num"><span class="nc">Tm</span> reação</th>
+          <th scope="col" class="num">ΔG ponta</th>
+          <th scope="col" class="num">Grampo <span class="nc">Tm</span> / ΔG</th>
+          <th scope="col" class="num">Homodímero</th>
+          <th scope="col">Situação</th>
+        </tr>
+      </thead>
+      <tbody data-revelar data-revelar-passo="0.04">
+        {% for p in tela.primers %}
+          <tr>
+            <td>{{ m.etiqueta(p.nome, p.lado) }}</td>
+            <td class="seq">{{ p.seq }}{% if p.seq2 %}<span class="seq-juncao" aria-label="junção das partes">·</span>{{ p.seq2 }}{% endif %}</td>
+            <td{% if p.regiao_viol %} class="viol"{% endif %}>{{ p.regiao }}</td>
+            <td class="num{% if p.nt_viol %} viol{% endif %}">{{ p.nt }}</td>
+            <td class="num{% if p.gc_viol %} viol{% endif %}">{{ p.gc }}</td>
+            <td class="num{% if p.tm_estado == 'viol' %} viol{% elif p.tm_estado == 'calibrar' %} calibrar{% endif %}">{{ p.tm }}</td>
+            <td class="num secundario">{{ p.tm_reacao }}</td>
+            <td class="num">{{ p.dg }}{% if p.ponta %} <span class="dg-ponta">{{ p.ponta }}</span>{% endif %}</td>
+            <td class="num secundario">{{ p.grampo }}</td>
+            <td class="num">{{ p.homodimero }}</td>
+            <td><span class="pilula pilula-{{ p.situacao_tipo }}">{{ p.situacao }}</span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if tela.nota_fip_bip %}
+    <p class="nota">{{ tela.nota_fip_bip }}</p>
+  {% endif %}
+</section>
+
+<div class="colunas-2">
+  <section class="secao" aria-labelledby="t-viol">
+    <div class="secao-cabecalho">
+      <h2 id="t-viol" class="secao-titulo">Violações <span class="secao-contagem">{{ tela.total_violacoes }}</span></h2>
+    </div>
+    {% if tela.total_violacoes == 0 or not tela.grupos_violacoes %}
+      <p class="texto-vazio">Nenhuma violação.</p>
+    {% else %}
+      {% for g in tela.grupos_violacoes %}
+        <div class="grupo-violacao">
+          <h3 class="grupo-violacao-titulo grupo-{{ g.tipo }}">{{ g.titulo }}</h3>
+          <ul class="lista-violacoes" data-revelar data-revelar-passo="0.04">
+            {% for i in g.itens %}
+              <li class="violacao">
+                {{ m.etiqueta(i.item, i.lado) }}
+                <span class="violacao-texto">{{ i.texto }}</span>
+                <span class="violacao-faixa">{{ i.faixa }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </section>
+
+  <section class="secao" aria-labelledby="t-het">
+    <div class="secao-cabecalho">
+      <h2 id="t-het" class="secao-titulo">Heterodímeros</h2>
+      <p class="secao-legenda">ΔG em kcal/mol do dímero com a ponta 3′ de um dos primers pareada, na temperatura da reação · mais negativo = mais estável · diagonal = homodímero pela ponta 3′ (a coluna Homodímero da tabela é o melhor alinhamento em qualquer ponto)</p>
+    </div>
+
+    <div class="tabela-rolagem" tabindex="0" role="region" aria-label="Matriz de heterodímeros">
+      <table class="matriz" data-onda>
+        <thead>
+          <tr>
+            <th scope="col"><span class="sr-only">Primer</span></th>
+            {% for n in tela.heterodimeros.nomes %}
+              <th class="matriz-topo" scope="col">{{ n }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in tela.heterodimeros.linhas %}
+            {% set i = loop.index0 %}
+            <tr>
+              <th class="matriz-lado" scope="row">{{ row.nome }}</th>
+              {% for c in row.celulas %}
+                <td><span class="matriz-celula matriz-faixa-{{ c.faixa }}{% if c.diagonal %} matriz-diagonal{% endif %}" style="--onda: {{ i + loop.index0 }}">{{ c.valor }}</span></td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="matriz-legenda">
+      {% for l in tela.heterodimeros.legenda %}
+        <span class="matriz-legenda-item"><span class="matriz-amostra matriz-faixa-{{ l.faixa }}"></span>{{ l.texto }}</span>
+      {% endfor %}
+    </div>
+
+    <p class="matriz-resumo">{{ tela.heterodimeros.resumo }}</p>
+    <p class="nota">Hoje o dímero só ordena propostas no desenho — não reprova, porque o limiar ainda não foi definido.</p>
+  </section>
+</div>
+{% endblock %}

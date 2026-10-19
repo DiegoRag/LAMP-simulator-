@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block titulo %}LAMP Primers — Não encontrado{% endblock %}
+
+{% block conteudo %}
+<header class="cabecalho-pagina">
+  <div class="cabecalho-pagina-texto">
+    <h1 class="titulo-pagina">Página <span class="titulo-tag">não encontrada</span></h1>
+    <p class="subtitulo-pagina">{% if tela.detalhe == "Not Found" %}O endereço pedido não existe{% else %}{{ tela.detalhe }}{% endif %}. As análises e os desenhos ficam na memória desta sessão e somem quando o servidor reinicia.</p>
+  </div>
+  <div class="cabecalho-pagina-acoes">
+    <a class="botao botao-primario" href="/">Voltar ao início</a>
+  </div>
+</header>
+{% endblock %}

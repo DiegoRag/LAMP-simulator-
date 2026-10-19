@@ -8,6 +8,9 @@
 # Origem: imports do protótipo de simulação do Henrique Prado
 # (lamp_color_ml_2.ipynb) e o protocolo de avaliação LAMP-S02-PROT.
 # Versões conferidas por instalação local em 05/09/2026.
+#
+# Python 3.12 ou mais novo: numpy 2.5.2 e scipy 1.18.1 não publicam pacote
+# para 3.11 (requires_python >= 3.12 no PyPI, conferido em 16/10/2026).
 
 # --- cadeia física do gerador: química -> pH -> espectro -> cor ---
 numpy==2.5.2
@@ -29,5 +32,14 @@ matplotlib==3.11.1     # curva de erro por tempo de decisao (PROT secao 6)
 primer3-py==2.3.1     # Tm, grampo e dimeros por termodinamica nearest-neighbor
 biopython==1.88       # complemento reverso, leitura de FASTA, tabelas NN de SantaLucia
 
-# --- testes ---
+# --- testes e estilo ---
 pytest==9.1.1
+ruff==0.16.10          # regras e linha de 110 herdadas da CI do lampsim (Henrique Prado)
+
+# --- interface web local (src/interface) ---
+fastapi==0.142.2
+starlette==1.7.0          # fixada junto com o fastapi
+uvicorn==0.54.0
+jinja2==3.1.6
+python-multipart==0.0.32  # envio de arquivos em formulário
+httpx2==2.13.1            # cliente de teste do starlette (TestClient)

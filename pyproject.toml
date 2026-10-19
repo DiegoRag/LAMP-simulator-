@@ -1,3 +1,33 @@
+# lamp-sim — um repositório, três pacotes em src/ (roadmap da esteira, 16/10/2026):
+#   primers  análise e desenho de primers LAMP (Diego Ragozini)
+#   lampsim  simulador de reação LAMP colorimétrica (Henrique Prado)
+#   esteira  o que liga os dois: o contrato selecao.json (a dupla)
+#
+# As versões das dependências ficam fixadas em requirements.txt, que é o que a
+# CI instala e confere; aqui não se repete nenhuma.
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lamp-sim"
+version = "0.1.0"
+description = "Frente de simulação do Projeto LAMP: primers, simulador de cor e a esteira que os liga"
+requires-python = ">=3.12"   # numpy 2.5.2 e scipy 1.18.1, fixados em requirements.txt, não instalam em 3.11
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths  = ["tests"]
+
+# Estilo herdado da CI do lampsim: mesmas regras e mesma linha para os três pacotes.
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = ["notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]

@@ -1,21 +1,17 @@
 # Esteira mínima do lamp-sim (ADR-0010 — é esta a "esteira verde" da regra).
 #
-# O LAMP-GIT-002 define a esteira mínima desta frente: "gerar um conjunto
-# pequeno duas vezes com a mesma semente e comparar". Essa verificação NÃO
-# entra hoje, porque o gerador só existe na Semana 3 (S03-04). Uma verificação
-# que não tem o que verificar é uma verificação que passa sempre.
-#
-# O que roda hoje são as duas que já têm objeto, seguindo o mesmo critério que
-# o guia declara — "uma verificação simples que roda vale mais que dez
-# planejadas" — e a convenção da esteira do lamp-firmware
-# (LAMP-NPQ-HenriqueMacedo-2026-08-29).
-#
-# ENTRA NA SEMANA 3, junto com o gerador:
-#   - determinismo por semente: gerar duas vezes, comparar resumo digital
-#   - instalação das dependências fixadas
+# Une as verificações das duas peças que agora vivem neste repositório
+# (roadmap da esteira, 16/10/2026), e nenhuma delas fica de fora:
+#   - do kit de governança: versões fixadas e nada de resultado versionado;
+#   - da CI do lampsim (Henrique Prado): estilo (ruff) e testes;
+#   - da LAMP-GIT-002, a esteira mínima desta frente: "gerar um conjunto
+#     pequeno duas vezes com a mesma semente e comparar". Ela esperava o
+#     gerador existir; com o lampsim aqui, passa a ter objeto e entra.
 #
 # Roda em pedido de integração, que é onde a verificação tem função: barrar o
-# que não passa antes de entrar no ramo principal.
+# que não passa antes de entrar no ramo principal. A CI do lampsim rodava
+# também a cada envio; aqui fica só no pedido, para poupar os minutos do plano
+# gratuito (ADR-0010). Para rodar num ramo sem pedido: Actions → Run workflow.
 
 name: Verificações
 
@@ -65,3 +61,53 @@ jobs:
             exit 1
           fi
           echo "Nenhum resultado versionado."
+
+  testes:
+    name: Estilo, testes e determinismo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 3.12 é o piso: numpy 2.5.2 e scipy 1.18.1 não instalam em 3.11, que era
+      # a versão da CI do lampsim antes da fusão.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar as dependências fixadas
+        run: python -m pip install -r requirements.txt
+
+      - name: Estilo
+        run: ruff check .
+
+      - name: Testes
+        run: python -m pytest -q
+
+      # A receita só substitui o resultado se gerar duas vezes com a mesma
+      # semente der exatamente o mesmo resultado (LAMP-GIT-002). Dois processos
+      # separados, para apanhar também o que muda de uma execução para outra e
+      # um teste dentro de um processo só não vê.
+      - name: Mesma semente, mesmo lote
+        env:
+          PYTHONPATH: src
+        run: |
+          set -euo pipefail
+          for i in 1 2; do
+            python - > "lote_$i.txt" <<'PY'
+          import hashlib
+
+          from lampsim.classes import simular
+          from lampsim.manifesto import gerar_lote, hash_lote
+
+          lote = gerar_lote(5, 2026)
+          resumo = hashlib.sha256()
+          for amostra in lote:
+              trajetoria = simular(amostra)
+              for campo in ("t", "ph", "fracao_acida", "rgb"):
+                  resumo.update(trajetoria[campo].tobytes())
+          print(hash_lote(lote), resumo.hexdigest())
+          PY
+          done
+          diff lote_1.txt lote_2.txt
+          echo "Mesma semente, mesmo lote: $(cat lote_1.txt)"

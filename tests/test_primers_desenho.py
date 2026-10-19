@@ -3,7 +3,9 @@
 import copy
 import json
 from pathlib import Path
+
 import pytest
+
 from primers.cli import main
 from primers.desenho import (
     AVISO,
@@ -25,20 +27,21 @@ def test_gerar_candidatos_alvo_ok():
     alvo = ler_alvo(DADOS / "alvo_ok.fasta")
     cands = gerar_candidatos(alvo, cfg)
 
-    assert len(cands["F3"]) == 115
-    assert len(cands["F2"]) == 34
-    assert len(cands["F1"]) == 165
-    assert len(cands["B1c"]) == 165
-    assert len(cands["B2c"]) == 34
-    assert len(cands["B3c"]) == 115
+    # fase 4: teto por janela (2 a cada 10 nt) no lugar do teto global; antes 157/157/86/87/153/153
+    assert len(cands["F3"]) == 35
+    assert len(cands["F2"]) == 35
+    assert len(cands["F1"]) == 22
+    assert len(cands["B1c"]) == 20
+    assert len(cands["B2c"]) == 32
+    assert len(cands["B3c"]) == 32
 
     regioes_esperadas = {
-        "F3": Regiao(0, 21),
-        "F2": Regiao(31, 49),
-        "F1": Regiao(81, 103),
-        "B1c": Regiao(108, 127),
-        "B2c": Regiao(157, 177),
-        "B3c": Regiao(187, 206),
+        "F3": Regiao(1, 26),
+        "F2": Regiao(26, 49),
+        "F1": Regiao(75, 99),
+        "B1c": Regiao(105, 128),
+        "B2c": Regiao(145, 169),
+        "B3c": Regiao(194, 213),
     }
 
     for tipo, regiao in regioes_esperadas.items():
@@ -52,7 +55,9 @@ def test_desenhar_alvo_ok():
     res = desenhar(alvo, cfg)
 
     assert len(res.conjuntos) >= 1
-    assert res.estatisticas["busca_truncada"] is False
+    # fase 4: a busca percorre o alvo inteiro (não há mais busca_truncada)
+    assert res.estatisticas["diagnostico"] == ""
+    assert res.estatisticas["nucleos_distintos"] == 4
 
     posicoes = [c.posicao for c in res.conjuntos]
     assert posicoes == list(range(1, len(res.conjuntos) + 1))
@@ -66,7 +71,7 @@ def test_desenhar_alvo_ok():
     res_copia = desenhar(alvo, cfg_copia)
 
     assert len(res_copia.conjuntos) >= 1
-    assert res_copia.conjuntos[0].desvio_tm <= 4.0383
+    assert res_copia.conjuntos[0].desvio_tm == pytest.approx(0.2762, abs=1e-3)
 
 
 def test_autoverificacao_conjuntos():
@@ -167,6 +172,7 @@ def test_calcular_distancias():
         "F3_F2_gap": 10,
         "B2c_B3c_gap": 10,
         "F1_B1c_gap": 5,
+        "F3_B3_total": 206,
     }
     assert dist == esperado
 

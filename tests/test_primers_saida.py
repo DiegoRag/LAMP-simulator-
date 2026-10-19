@@ -3,6 +3,7 @@
 import csv
 import json
 from pathlib import Path
+
 from primers.analise import analisar
 from primers.cli import main
 from primers.entrada import carregar_config, ler_alvo, ler_conjunto
@@ -34,6 +35,7 @@ def test_exportar_analise_ok(tmp_path):
             "comprimento",
             "gc_pct",
             "tm_c",
+            "tm_reacao_c",
             "dg_extremidade_kcal",
             "extremidade",
             "grampo_tm_c",
@@ -43,22 +45,28 @@ def test_exportar_analise_ok(tmp_path):
         ]
         assert reader.fieldnames == chaves_esperadas
         linhas = list(reader)
-        nomes = [l["nome"] for l in linhas]
+        nomes = [linha["nome"] for linha in linhas]
         assert nomes == ["F3", "B3", "F2", "F1c", "B2", "B1c", "FIP", "BIP"]
-        linha_fip = next(l for l in linhas if l["nome"] == "FIP")
+        linha_fip = next(linha for linha in linhas if linha["nome"] == "FIP")
         assert linha_fip["tm_c"] == ""
 
     with open(pasta / "violacoes.csv", "r", encoding="utf-8") as f:
         reader_viol = csv.reader(f)
         linhas_viol = list(reader_viol)
-        assert len(linhas_viol) == 1
+        # cabeçalho + 8 violações de Tm e de ponta de conjunto_ok na convenção da fase 3
+        assert len(linhas_viol) == 9
         assert linhas_viol[0] == ["item", "regra", "valor", "faixa", "mensagem"]
+        assert {linha[1] for linha in linhas_viol[1:]} == {"tm_c", "extremidade"}
 
     with open(pasta / "resultado.json", "r", encoding="utf-8") as f:
         dados_json = json.load(f)
 
     assert set(dados_json.keys()) == {
         "versao_codigo",
+        "coordenadas",
+        "alvo",
+        "fita",
+        "conjunto",
         "condicoes",
         "config",
         "avisos",
@@ -66,6 +74,9 @@ def test_exportar_analise_ok(tmp_path):
         "heterodimeros",
         "violacoes",
         "regioes",
+        "regioes_aproximadas",
+        "incompat",
+        "eficiencia_prevista",
     }
     assert dados_json["regioes"]["F2"] == [31, 49]
 
@@ -80,7 +91,7 @@ def test_heterodimeros_csv(tmp_path):
     exportar(res, pasta, cfg)
 
     with open(pasta / "heterodimeros.csv", "r", encoding="utf-8") as f:
-        linhas = [l.strip() for l in f.readlines() if l.strip()]
+        linhas = [linha.strip() for linha in f.readlines() if linha.strip()]
 
     assert linhas[0] == "nome,F3,B3,FIP,BIP"
     assert len(linhas) == 5

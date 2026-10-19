@@ -1,6 +1,7 @@
 """Testes unitários para o modelo de dados de primers LAMP."""
 
 import pytest
+
 from primers.modelo import ConjuntoLAMP, Regiao, normalizar, primers_de_regioes, rc
 
 
@@ -12,9 +13,11 @@ def test_rc():
 
 def test_normalizar():
     assert normalizar(" acgt \n") == "ACGT"
+    assert normalizar("ACGU") == "ACGT"
     with pytest.raises(ValueError) as exc_info:
-        normalizar("ACGU")
-    assert "U" in str(exc_info.value)
+        normalizar("ACGX")
+    assert "'X'" in str(exc_info.value)
+    assert "posição 4" in str(exc_info.value)
 
 
 def test_regiao_validacao():

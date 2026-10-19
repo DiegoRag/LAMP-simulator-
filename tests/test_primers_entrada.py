@@ -1,8 +1,10 @@
 """Testes para o módulo de entrada de primers LAMP."""
 
 from pathlib import Path
+
 import pytest
-from primers.entrada import carregar_config, ler_alvo, ler_conjunto
+
+from primers.entrada import ler_alvo, ler_alvos, ler_conjunto
 
 DADOS = Path(__file__).parent / "dados"
 
@@ -33,16 +35,30 @@ def test_validacoes_csv(tmp_path):
 
     # Nome repetido -> ValueError
     f_rep = tmp_path / "repetido.csv"
-    f_rep.write_text("nome,sequencia\nF3,ACGTACGTACGTACGT\nF3,ACGTACGTACGTACGT\n", encoding="utf-8")
+    f_rep.write_text(
+        "nome,sequencia\nF3,ACGTACGTACGTACGT\nF3,ACGTACGTACGTACGT\n", encoding="utf-8"
+    )
     with pytest.raises(ValueError):
         ler_conjunto(f_rep)
 
-    # Sequência ACGU na terceira linha -> ValueError com "linha 3"
+    # Sequência ACGU é válida e convertida para ACGTACGTACGTACGT
     f_acgu = tmp_path / "acgu.csv"
-    f_acgu.write_text("nome,sequencia\nF3,ACGTACGTACGTACGT\nF2,ACGUACGTACGTACGT\n", encoding="utf-8")
-    with pytest.raises(ValueError) as exc_acgu:
-        ler_conjunto(f_acgu)
-    assert "linha 3" in str(exc_acgu.value)
+    f_acgu.write_text(
+        "nome,sequencia\nF3,ACGTACGTACGTACGT\nF2,ACGUACGTACGTACGT\nF1c,ACGTACGTACGTACGT\n",
+        encoding="utf-8",
+    )
+    leitura_acgu = ler_conjunto(f_acgu)
+    assert leitura_acgu.primers["F2"] == "ACGTACGTACGTACGT"
+
+    # Sequência com caractere inválido 'X' -> ValueError com "linha 3" e "posição 4"
+    f_acgx = tmp_path / "acgx.csv"
+    f_acgx.write_text(
+        "nome,sequencia\nF3,ACGTACGTACGTACGT\nF2,ACGXACGTACGTACGT\n", encoding="utf-8"
+    )
+    with pytest.raises(ValueError) as exc_acgx:
+        ler_conjunto(f_acgx)
+    assert "linha 3" in str(exc_acgx.value)
+    assert "posição 4" in str(exc_acgx.value)
 
     # F1c sem F2 -> ValueError
     f_f1c = tmp_path / "f1c_sem_f2.csv"
@@ -103,8 +119,8 @@ def test_fip_bip_sem_partes_com_alvo(tmp_path):
     assert leitura.conjunto is not None
     assert leitura.conjunto.F1c == "GTAAACCCCCAAGTGTTATTGG"
     assert leitura.conjunto.F2 == "CGCATATGGATTCTGTAC"
-    assert leitura.conjunto.B1c == "AAGGGTAATTCTCCGTC"
-    assert leitura.conjunto.B2 == "CAGCAATAGTATAAAGTCTCGC"
+    assert leitura.conjunto.B1c == "AAGGGTAATTCTCCGTCCA"
+    assert leitura.conjunto.B2 == "GCAATAGTATAAAGTCTCGC"
     assert any("ambíguo" in a and "FIP" in a for a in leitura.avisos)
     assert any("ambíguo" in a and "BIP" in a for a in leitura.avisos)
 
@@ -112,5 +128,9 @@ def test_fip_bip_sem_partes_com_alvo(tmp_path):
 def test_ler_alvo_dois_registros(tmp_path):
     f_fasta = tmp_path / "multiplos.fasta"
     f_fasta.write_text(">reg1\nACGT\n>reg2\nTGCA\n", encoding="utf-8")
-    with pytest.raises(ValueError):
-        ler_alvo(f_fasta)
+    assert ler_alvo(f_fasta) == "ACGT"
+    assert ler_alvo(f_fasta, registro="reg2") == "TGCA"
+    regs = ler_alvos(f_fasta)
+    assert len(regs) == 2
+    assert regs[0].id == "reg1" and regs[0].sequencia == "ACGT"
+    assert regs[1].id == "reg2" and regs[1].sequencia == "TGCA"

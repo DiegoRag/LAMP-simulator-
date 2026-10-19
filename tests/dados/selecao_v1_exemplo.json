@@ -1,0 +1,61 @@
+{
+  "esquema": "lamp-sim/selecao@1",
+  "gerado_por": {
+    "versao_codigo": "a44a2d9",
+    "experimento": "exemplo-sintetico",
+    "config_sha256": "7232b3bd903a1012a789e139434602181a01ae5c2e60a5f68556b70e89074f4c"
+  },
+  "conjuntos": [
+    {
+      "conjunto_id": "sint.1",
+      "origem": "desenho",
+      "aviso": "Candidatos computacionais, não validados experimentalmente. A definição do conjunto que vai ao tubo é da equipe biomédica (ADR-0013).",
+      "primers": {
+        "F3": "GTGACAGACTCTCCTTAGAT",
+        "B3": "GCAATAGTATAAAGTCTCGCC",
+        "FIP": "AAGTTTCGTGCTGACGTGGCTAAAGACACGCATATG",
+        "BIP": "CCAATAACACTTGGGGGTTTCTTAAGCGATTCACACTG",
+        "LB": "TTGGCAAGGGTAATTCTCCG"
+      },
+      "por_alelo": [
+        {
+          "alelo_id": "sintA",
+          "acesso": null,
+          "incompat_total": 0,
+          "incompat_3p": 0,
+          "f_previsto": null
+        },
+        {
+          "alelo_id": "sintB",
+          "acesso": null,
+          "incompat_total": null,
+          "incompat_3p": null
+        }
+      ],
+      "selecionado": true,
+      "motivo": "primeiro do ranking do desenhar no alvo sintético alvo_ok.fasta"
+    },
+    {
+      "conjunto_id": "sint.2",
+      "origem": "desenho",
+      "aviso": "Candidatos computacionais, não validados experimentalmente. A definição do conjunto que vai ao tubo é da equipe biomédica (ADR-0013).",
+      "primers": {
+        "F3": "GTGACAGACTCTCCTTAGAT",
+        "B3": "GCAATAGTATAAAGTCTCGCC",
+        "FIP": "CAAGTTTCGTGCTGACGTGCTAAAGACACGCATATG",
+        "BIP": "CCAATAACACTTGGGGGTTTCTTAAGCGATTCACACTG",
+        "LB": "TTGGCAAGGGTAATTCTCCG"
+      },
+      "por_alelo": [
+        {
+          "alelo_id": "sintA",
+          "acesso": null,
+          "incompat_total": 0,
+          "incompat_3p": 0
+        }
+      ],
+      "selecionado": false,
+      "motivo": "segundo do ranking; fica de reserva"
+    }
+  ]
+}

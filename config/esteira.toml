@@ -1,0 +1,13 @@
+# Ponte entre a análise de primers e o simulador (src/esteira/ponte.py).
+# PROVISÓRIO: valores de ordem de grandeza, a calibrar com dado de bancada. Nenhum
+# deles vem de medida deste projeto.
+
+[eficiencia]
+# Eficiência prevista do conjunto contra o alvo: produto, região por região, de
+# fator_ponta3 ^ (incompatibilidades a menos de [casamento] bases_ponta_3p nt da ponta que
+# estende) × fator_outra ^ (demais incompatibilidades).
+fator_ponta3 = 0.3          # cada incompatibilidade perto da ponta que estende
+fator_outra  = 0.85         # cada incompatibilidade no resto do primer
+# Primer de laço (LF, LB) acelera, mas não é essencial: o fator de uma região de laço,
+# mesmo ausente do alvo, não cai abaixo deste piso. Região essencial ausente: eficiência 0.
+piso_laco    = 0.5

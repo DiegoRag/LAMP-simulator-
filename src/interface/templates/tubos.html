@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block titulo %}LAMP Primers — Tubos{% endblock %}
+
+{% block conteudo %}
+{% set simulacao = tela.modo == "simulacao" %}
+<header class="cabecalho-pagina">
+  <div class="cabecalho-pagina-texto">
+    <h1 class="titulo-pagina">Cor do tubo <span class="titulo-tag">ao longo do tempo</span></h1>
+    {% if simulacao %}
+    <p class="subtitulo-pagina">Tubos simulados pelo lampsim com o conjunto da
+      <a href="{{ tela.origem.url_analise }}">análise {{ tela.origem.id }}</a>
+      ({{ tela.origem.conjunto }} × {{ tela.origem.alvo }}): uma diluição do alvo e os dois
+      controles. O tempo é o da reação, em minutos; a leitura vale aos {{ tela.leitura_texto }}.</p>
+    {% else %}
+    <p class="subtitulo-pagina">Curvas digitadas à mão: escolha um tubo para mudar quando e como ele
+      vira; as faixas embaixo comparam todos no mesmo tempo, em minutos de reação.</p>
+    {% endif %}
+  </div>
+</header>
+
+{% if tela.aviso %}
+<div class="aviso {{ 'aviso-info' if simulacao else 'aviso-alerta' }} tubos-aviso" role="note" data-tubos-aviso>
+  <svg class="aviso-icone" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 3l10 18H2z"></path>
+    <path d="M12 10v5"></path>
+    <circle cx="12" cy="18" r="0.9" fill="currentColor"></circle>
+  </svg>
+  <div class="aviso-texto">
+    <p>{{ tela.aviso }}</p>
+    {% if not simulacao and tela.pode_simular %}
+    <p class="aviso-links"><a href="{{ tela.url_simulacao }}">Voltar aos tubos simulados</a></p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{% if simulacao %}
+<section class="tubos-origem" aria-label="De onde vêm os tubos">
+  <dl class="tubos-origem-dados">
+    <div><dt>Eficiência prevista</dt><dd class="mono" data-tubos-eficiencia>{{ tela.origem.eficiencia_texto }}</dd></div>
+    <div><dt>Incompatibilidades com o alvo</dt><dd>{{ tela.origem.incompat_texto }}</dd></div>
+    <div><dt>Leitura</dt><dd class="mono">{{ tela.leitura_texto }}</dd></div>
+  </dl>
+  <p class="tubos-origem-nota">Modelo de eficiência e cinética provisório, a calibrar com bancada
+    (config/esteira.toml e src/lampsim/config.py).</p>
+  <a class="botao botao-secundario" href="{{ tela.url_manual }}" data-tubos-ir-manual>Usar curvas manuais</a>
+</section>
+{% endif %}
+
+<noscript><p class="aviso aviso-alerta">Esta página precisa de JavaScript para simular as cores.</p></noscript>
+
+<section class="tubos-palco" aria-labelledby="t-bandeja" data-tubos-modo="{{ tela.modo }}">
+  <h2 id="t-bandeja" class="sr-only">Bandeja de tubos</h2>
+  <div class="tubos-bandeja" data-tubos-bandeja role="group" aria-label="Tubos do experimento; escolha um para ver ou ajustar">
+    {% for t in tela.tubos %}
+    {% if simulacao %}
+    {% set referencia = t.papel != "amostra" and (loop.first or loop.previtem.papel == "amostra") %}
+    {% set cor = t.cores[0] %}
+    {% else %}
+    {% set referencia = loop.last %}
+    {% set cor = tela.cor_inicial %}
+    {% endif %}
+    <button type="button" class="tubo{% if referencia %} tubo-referencia{% endif %}" data-tubo="{{ loop.index0 }}" aria-pressed="{{ 'true' if loop.first else 'false' }}">
+      <span class="tubo-tampa" aria-hidden="true"></span>
+      <span class="tubo-corpo" aria-hidden="true"><span class="tubo-liquido" style="--cor: {{ cor }}"></span></span>
+      <span class="tubo-nome" data-tubo-nome>{{ t.nome }}</span>
+      <span class="tubo-pct mono" data-tubo-pct>—</span>
+    </button>
+    {% endfor %}
+  </div>
+  <div class="tubos-tempo">
+    <button type="button" class="botao botao-principal tubos-tocar" data-tubos-tocar aria-pressed="false">Reproduzir</button>
+    <label class="tubos-cursor-rotulo" for="tubos-cursor">Tempo</label>
+    <input class="tubos-cursor" id="tubos-cursor" type="range" data-tubos-cursor min="0" max="{{ tela.duracao_min }}" step="{{ tela.passo_min }}" value="0">
+    <output class="tubos-relogio mono" for="tubos-cursor" data-tubos-relogio>0,0 min</output>
+    <label class="tubos-duracao">Duração
+      <input type="number" class="campo-numero" data-tubos-duracao min="1" max="{{ tela.duracao_max_min }}" step="1" value="{{ tela.duracao_min }}"> min</label>
+    <label class="tubos-velocidade">Velocidade
+      <select class="campo-numero" data-tubos-velocidade>
+        {% for v in tela.velocidades %}
+        <option value="{{ '%g'|format(v) }}"{% if v == tela.velocidade %} selected{% endif %}>{{ '%g'|format(v) }}×</option>
+        {% endfor %}
+      </select></label>
+  </div>
+</section>
+
+<section class="secao" aria-labelledby="t-faixas">
+  <div class="secao-cabecalho"><h2 id="t-faixas" class="secao-titulo">Faixas de cor no tempo</h2></div>
+  {% if simulacao %}
+  <p class="secao-legenda">A linha tracejada marca a leitura aos {{ tela.leitura_texto }}; o diagnóstico de cada tubo sai da cor nesse instante.</p>
+  {% endif %}
+  <div class="tubos-faixas" data-tubos-faixas>
+    {% for t in tela.tubos %}
+    <button type="button" class="tubos-faixa-linha" data-faixa="{{ loop.index0 }}" aria-label="Escolher {{ t.nome }}">
+      <span class="tubos-faixa-nome" data-faixa-nome>{{ t.nome }}</span>
+      <canvas class="tubos-faixa" data-tubos-faixa="{{ loop.index0 }}" aria-hidden="true"></canvas>
+    </button>
+    {% endfor %}
+    {% if simulacao %}
+    <div class="tubos-faixas-leitura" data-tubos-marca-leitura aria-hidden="true"></div>
+    {% endif %}
+    <div class="tubos-faixas-marcador" data-tubos-marcador aria-hidden="true"></div>
+    <div class="tubos-faixas-eixo mono" data-tubos-eixo aria-hidden="true"></div>
+  </div>
+</section>
+
+{% if simulacao %}
+<section class="secao" aria-labelledby="t-tabela">
+  <div class="secao-cabecalho"><h2 id="t-tabela" class="secao-titulo">Leitura aos {{ tela.leitura_texto }}</h2></div>
+  <div class="tabela-rolagem" tabindex="0" role="region" aria-label="Tubos simulados">
+    <table class="tabela tubos-tabela">
+      <thead>
+        <tr>
+          <th scope="col">Tubo</th>
+          <th scope="col">Papel</th>
+          <th scope="col" class="num">Cópias (média)</th>
+          <th scope="col" class="num">Cópias no tubo</th>
+          <th scope="col" class="num">Eficiência</th>
+          <th scope="col" class="num">Vira em</th>
+          <th scope="col">Diagnóstico</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tela.tubos %}
+        <tr data-tubos-linha="{{ loop.index0 }}">
+          <th scope="row">{{ t.nome }}</th>
+          <td>{{ t.papel_texto }}</td>
+          <td class="num mono">{{ t.copias_media_texto }}</td>
+          <td class="num mono">{{ t.copias_texto }}</td>
+          <td class="num mono">{{ t.eficiencia_texto }}</td>
+          <td class="num mono">{{ t.t_positivo_texto }}</td>
+          <td><span class="tubos-diag tubos-diag-{{ t.diagnostico }}">{{ t.diagnostico_texto }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="secao-legenda">Cópias no tubo: sorteio de Poisson em volta da média, com semente fixa. "Vira em": primeiro minuto com metade do indicador na forma ácida.</p>
+  <figure class="tubos-grafico tubos-grafico-largo">
+    <canvas class="tubos-curva" data-tubos-curva role="img" aria-label="pH do tubo escolhido ao longo do tempo"></canvas>
+    <figcaption class="tubos-leitura" data-tubos-leitura aria-live="polite"></figcaption>
+  </figure>
+</section>
+{% else %}
+<section class="secao tubos-editor-secao" aria-labelledby="t-editor">
+  <div class="secao-cabecalho"><h2 id="t-editor" class="secao-titulo">Ajustar <span class="nc" data-tubos-editor-nome>{{ tela.tubos[0].nome }}</span></h2></div>
+  <div class="tubos-editor" data-tubos-editor>
+    <div class="tubos-editor-campos">
+      <label class="campo">Nome <input type="text" class="campo-texto" data-campo="nome" maxlength="24"></label>
+      <fieldset class="campo tubos-curva-opcoes"><legend>Forma da virada</legend>
+        <label><input type="radio" name="curva" value="linear" data-campo="curva"> Gradual (linear)</label>
+        <label><input type="radio" name="curva" value="sigmoide" data-campo="curva"> Em S (lenta, rápida, lenta)</label>
+      </fieldset>
+      <label class="campo">Começa a virar em <span class="tubos-par"><input type="range" data-campo="inicio" min="0" step="0.5"><input type="number" class="campo-numero" data-campo="inicio" min="0" step="0.5"> min</span></label>
+      <label class="campo">A virada dura <span class="tubos-par"><input type="range" data-campo="duracao" min="0.5" step="0.5"><input type="number" class="campo-numero" data-campo="duracao" min="0.5" step="0.5"> min</span></label>
+      <label class="campo">Chega a <span class="tubos-par"><input type="range" data-campo="alcance" min="0" max="100" step="1"><input type="number" class="campo-numero" data-campo="alcance" min="0" max="100" step="1"> % da queda de pH</span></label>
+      <div class="tubos-acoes">
+        <button type="button" class="botao botao-secundario" data-tubos-copiar>Copiar para todos os tubos</button>
+        <button type="button" class="botao botao-secundario" data-tubos-restaurar>Restaurar exemplo</button>
+      </div>
+    </div>
+    <figure class="tubos-grafico">
+      <canvas class="tubos-curva" data-tubos-curva role="img" aria-label="Curva da virada do tubo escolhido"></canvas>
+      <figcaption class="tubos-leitura" data-tubos-leitura aria-live="polite"></figcaption>
+    </figure>
+  </div>
+</section>
+{% endif %}
+
+<script type="application/json" id="tubos-dados">{{ tela|tojson }}</script>
+<script src="/static/tubos.js" defer></script>
+{% endblock %}

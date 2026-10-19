@@ -1,13 +1,23 @@
-[reacao]                    # condições para Tm e ΔG — PROVISÓRIAS
-na_mM   = 50.0              # mistura WarmStart é proprietária; conferir
-mg_mM   = 8.0               # típico de LAMP; conferir
-dntp_mM = 1.4               # conferir se é total ou por nucleotídeo
-temp_C  = 37.0              # temperatura de referência dos ΔG
+[reacao]                    # condições da REAÇÃO: Tm da reação (informativa), grampos e dímeros
+na_mM        = 0.0          # Na⁺: o tampão isotérmico 1X da NEB não leva Na⁺; conferir
+k_mM         = 50.0         # K⁺ de 50 mM de KCl do tampão 1X; conferir
+nh4_mM       = 20.0         # NH₄⁺ de 10 mM de (NH₄)₂SO₄ do tampão 1X; conferir
+mg_mM        = 8.0          # 2 mM do tampão + 6 mM acrescentados (protocolo LAMP da NEB); conferir
+dntp_cada_mM = 1.4          # mM de CADA dNTP; o total (4 × 1,4 = 5,6 mM) vai ao primer3 e quela o Mg²⁺
+temp_C       = 65.0         # temperatura da reação: grampos e dímeros avaliados aqui
 
-[concentracao_nM]           # artigo-base: razão 1:4:1 (1 µM F3/B3, 4 µM FIP/BIP, 1 µM FLP)
-externos = 200.0            # conferir se os valores do artigo são da mistura ou finais
-internos = 1600.0
+[tm_referencia]             # convenção do PrimerExplorer V5 (Eiken), em que valem as faixas de [tm_c]
+oligo_nM = 100.0            # 0,1 µM
+na_mM    = 50.0
+mg_mM    = 4.0              # entra como Na⁺ equivalente: [Na⁺] + 4·√[Mg²⁺], em mol/L
+
+[concentracao_nM]           # PENDENTE: só a Tm da reação (informativa) usa estes valores. 0,2/1,6/0,4 µM
+externos = 200.0            # (1:8:2) é o protocolo LAMP da NEB; o artigo-base cita 1:4:1 (1/4/1 µM).
+internos = 1600.0           # Mantidos até conferir no artigo se os valores dele são da mistura ou finais.
 loops    = 400.0
+
+[dobramento]                # F1c/B1c: o laço F1–F1c (B1–B1c) fecha na mesma fita
+distancia_nt_padrao = 50    # F2_F1 e B1c_B2c presumidas quando as regiões não estão localizadas
 
 [comprimento]
 min = 18
@@ -19,31 +29,55 @@ loop_max = 25
 min = 40.0
 max = 65.0
 
-[tm_c]                      # conferir
+[tm_c]                      # guia da Eiken (PrimerExplorer V5), na convenção de [tm_referencia]
 F1c_B1c = [64.0, 66.0]
 F2_B2   = [59.0, 61.0]
 F3_B3   = [59.0, 61.0]
 loops   = [64.0, 66.0]
 
-[extremidade]               # conferir
+[extremidade]               # PrimerExplorer V5: ΔG°37 em NaCl 1 M das bases da ponta, com iniciação
 bases  = 6
 dg_max = -4.0               # kcal/mol; a extremidade deve ser AO MENOS tão estável quanto isto
 
-[distancias]                # nt, coordenadas da fita +; conferir
-F2_B2       = [120, 160]    # fim(B2c) - ini(F2)
+[distancias]                # nt, coordenadas da fita escolhida; conferir
+F2_B2       = [120, 180]    # fim(B2c) - ini(F2); 120-160 é preferência no ranking
 F2_F1       = [40, 60]      # ini(F1) - ini(F2)
 B1c_B2c     = [40, 60]      # fim(B2c) - fim(B1c)
 F3_F2_gap   = [0, 60]       # ini(F2) - fim(F3)
 B2c_B3c_gap = [0, 60]       # ini(B3c) - fim(B2c)
 F1_B1c_gap  = [0, 1000]     # ini(B1c) - fim(F1); sem sobreposição
+F3_B3_total = [120, 280]    # fim(B3c) - ini(F3); tamanho total externo F3-B3
+
+[casamento]
+max_erros = 3               # máximo de substituições para casamento aproximado
+bases_ponta_3p = 5          # incompatibilidade a menos de 5 nt da ponta que estende conta como "da ponta 3'"
+
+[alvo]
+circular = false            # se true, permite amplicon cruzando a origem do alvo
+
+[iupac]
+modo_tm       = "media"     # "media" ou "pior_caso" (menor Tm / maior ΔG entre variantes expandidas)
+max_expansoes = 64          # teto de variantes ACGT expandidas para cálculo termodinâmico
 
 [dimeros]
 # v0 só REPORTA dímeros, não filtra. Limiar a definir com dado — não invente.
+max_nt_estrutura = 60       # limite máximo (nt) suportado pelo alinhamento termodinâmico do Primer3
 
 [desenho]
-ligante              = ""
-candidatos_por_regiao = 200   # teto, para a busca combinatória não explodir
-conjuntos_examinados  = 200000
+ligante               = ""
+ligantes_candidatos   = ["", "TTTT", "TTT", "TTTTT"]
+F2_B2_pref            = [120, 160]  # faixa preferida da Eiken para F2_B2 no ranking
+peso_f2_b2            = 0.5         # pontos por nt fora de F2_B2_pref
+janela_nt             = 10    # teto por janela: o alvo é dividido em janelas de 10 nt pelo início da região...
+candidatos_por_janela = 2     # ...e cada tipo guarda, em cada janela, os 2 de menor desvio de Tm
+nucleos_guardados     = 5000  # monte limitado: melhores núcleos F2–B2c guardados ao percorrer o alvo inteiro
+sobreposicao_max_nt   = 10    # propostas distintas: F2 e B2c não se sobrepõem os dois em mais de 10 nt
+pre_selecao           = 50    # núcleos distintos que passam para a 2a etapa do ranking (dímeros)
 n_resultados          = 5
-pre_selecao           = 50    # conjuntos que passam para a 2a etapa do ranking (dimeros)
-peso_dimero           = 0.5   # PROVISORIO: pontos por kcal/mol do pior heterodimero; ranqueia, nao filtra
+peso_dimero           = 0.5   # PROVISORIO: pontos por kcal/mol do pior dímero do tubo; ranqueia, não filtra
+grampo_margem_C       = 0.0   # descarta o candidato cujo grampo tem Tm >= [reacao] temp_C - margem
+homodimero_margem_C   = 0.0   # idem para o homodímero, na concentração do primer no tubo
+
+[desenho_relaxado]          # PROVISORIO: oferecido quando o desenho sai vazio; não é do guia da Eiken
+gc_pct     = [30.0, 70.0]   # no lugar de [gc_pct], para alvos ricos em AT ou em GC
+tm_folga_C = 1.0            # cada faixa de [tm_c] alargada em 1 °C de cada lado (59–61 → 58–62)

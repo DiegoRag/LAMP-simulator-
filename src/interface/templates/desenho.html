@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block titulo %}LAMP Primers — Desenho{% endblock %}
+
+{% block conteudo %}
+{% import "_macros.html" as m %}
+<header class="cabecalho-pagina">
+  <div class="cabecalho-pagina-texto">
+    <h1 class="titulo-pagina">Desenho <span class="titulo-tag">{{ tela.alvo }}</span></h1>
+    <p class="subtitulo-pagina">Alvo {{ tela.alvo }} · {{ tela.comprimento }} pb · {{ tela.cabecalho }} · busca determinística: mesma entrada, mesmo resultado</p>
+  </div>
+  <div class="cabecalho-pagina-acoes">
+    <a class="botao botao-secundario" href="/desenho/{{ tela.id }}/exportar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 4v12M7 11l5 5 5-5"></path>
+        <path d="M4 20h16"></path>
+      </svg>
+      Exportar propostas
+    </a>
+    {% if tela.proposta %}
+      <form class="form-inline" method="post" action="/desenho/{{ tela.id }}/analisar" data-carregar="analise" data-titulo="Análise" data-tag="proposta {{ tela.sel }}">
+        <input type="hidden" name="posicao" value="{{ tela.sel }}">
+        <button class="botao botao-primario" type="submit">Analisar a proposta {{ tela.sel }}</button>
+      </form>
+    {% endif %}
+  </div>
+</header>
+
+<div class="aviso aviso-info" role="note">
+  <svg class="aviso-icone" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="9"></circle>
+    <path d="M12 11v6"></path>
+    <circle cx="12" cy="7.5" r="0.9" fill="currentColor"></circle>
+  </svg>
+  <div class="aviso-texto">
+    <p>{{ tela.aviso }}</p>
+  </div>
+</div>
+
+<section class="secao" aria-labelledby="t-busca">
+  <div class="secao-cabecalho">
+    <h2 id="t-busca" class="secao-titulo">Busca</h2>
+  </div>
+  <div class="busca">
+    <div class="busca-candidatos">
+      <span class="rotulo-pequeno">Candidatos por região</span>
+      <div class="etiquetas" data-revelar data-revelar-passo="0.05">
+        {% for c in tela.candidatos %}
+          {{ m.etiqueta(c.texto, c.lado, c.texto.split(" ")[0]) }}
+        {% endfor %}
+      </div>
+    </div>
+    <div class="busca-resumo">
+      <span class="busca-examinados"><strong data-contar>{{ tela.examinados }}</strong> núcleos F2–B2c examinados</span>
+      {% if tela.relaxado %}
+        <span class="pilula pilula-calibrar">Faixas relaxadas, fora do guia</span>
+      {% else %}
+        <span class="pilula pilula-ok">Alvo inteiro percorrido</span>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% if tela.vazio %}
+  <div class="aviso aviso-alerta" role="note">
+    <svg class="aviso-icone" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 3l10 18H2z"></path>
+      <path d="M12 10v5"></path>
+      <circle cx="12" cy="18" r="0.9" fill="currentColor"></circle>
+    </svg>
+    <div class="aviso-texto">
+      <p>{{ tela.mensagem_vazio }}</p>
+      {% if tela.pode_relaxar %}
+        <form class="form-inline" method="post" action="/desenhar" data-carregar="desenho" data-titulo="Desenho" data-tag="faixas relaxadas">
+          <input type="hidden" name="relaxado" value="1">
+          <button class="botao botao-secundario" type="submit">Desenhar com as faixas relaxadas</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+{% else %}
+  <section class="secao" aria-labelledby="t-rank">
+    <div class="secao-cabecalho">
+      <h2 id="t-rank" class="secao-titulo">Ranking</h2>
+      <div class="filtro-agrupar">
+        <input id="agrupar" type="checkbox" data-alternar="{{ tela.href_alternar_agrupar }}"{% if tela.agrupar %} checked{% endif %}>
+        <label for="agrupar">Agrupar variantes do mesmo núcleo</label>
+        <noscript><a href="{{ tela.href_alternar_agrupar }}" class="link-noscript">Alternar agrupamento</a></noscript>
+      </div>
+    </div>
+
+    {% if tela.nota_empate %}
+      <div class="aviso aviso-alerta" role="note">
+        <svg class="aviso-icone" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3l10 18H2z"></path>
+          <path d="M12 10v5"></path>
+          <circle cx="12" cy="18" r="0.9" fill="currentColor"></circle>
+        </svg>
+        <div class="aviso-texto">
+          <p>{{ tela.nota_empate }}</p>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="tabela-rolagem" tabindex="0" role="region" aria-label="Tabela do ranking de propostas">
+      <div class="ranking" data-revelar data-revelar-passo="0.05">
+        <div class="ranking-cabecalho">
+          <span>#</span>
+          <span class="num">Pontuação</span>
+          <span class="num">Desvio <span class="nc">Tm</span></span>
+          <span class="num">Pior dímero</span>
+          <span><span class="nc">F1c</span></span>
+          <span><span class="nc">B1c</span></span>
+          <span>LB</span>
+          <span>Avisos</span>
+        </div>
+        {% for p in tela.lista %}
+          <a class="ranking-linha{% if p.selecionada %} ranking-selecionada{% endif %}" href="{{ p.href }}"{% if p.selecionada %} aria-current="true"{% endif %}>
+            <span class="ranking-num"><strong>{{ p.num }}</strong>{% if p.extra %}<span class="ranking-extra">{{ p.extra }}</span>{% endif %}</span>
+            <span class="ranking-dado num"><strong>{{ p.pontuacao }}</strong></span>
+            <span class="ranking-dado num">{{ p.desvio_tm }}</span>
+            <span class="ranking-dado num">{{ p.pior_dimero }}</span>
+            <span class="ranking-coord{% if p.f1_dif %} coord-dif{% endif %}">{{ p.f1 }}</span>
+            <span class="ranking-coord{% if p.b1c_dif %} coord-dif{% endif %}">{{ p.b1c }}</span>
+            <span class="ranking-coord{% if p.lb_dif %} coord-dif{% endif %}">{{ p.lb }}</span>
+            <span class="ranking-avisos">{{ p.avisos }}</span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+    <p class="nota">Pontuação = desvio da Tm de referência (PrimerExplorer V5) ao centro da faixa, somado nas seis regiões + penalidade de F2–B2 fora da faixa preferida + peso × max(0, −ΔG do pior dímero com ponta 3′ entre os primers do tubo, laços incluídos, na temperatura da reação). Peso do dímero provisório: ordena, não reprova. Cada proposta vem de um núcleo F2–B2c diferente. Regiões destacadas diferem da proposta 1.</p>
+    {% if tela.nota_tm %}<p class="nota">{{ tela.nota_tm }} <a href="/parametros">Ver em Parâmetros</a></p>{% endif %}
+  </section>
+
+  {% if tela.proposta %}
+    <section class="secao" aria-labelledby="t-prop">
+      <div class="secao-cabecalho">
+        <h2 id="t-prop" class="secao-titulo">Proposta {{ tela.proposta.num }}</h2>
+        <p class="secao-legenda">fita + · {{ tela.comprimento }} pb · coordenadas a partir de 1 · autoverificada contra as mesmas regras da análise</p>
+      </div>
+
+      <div class="analise-helice">
+        <canvas class="helice" data-helice="dados" data-comprimento="{{ tela.comprimento }}" data-regioes='{{ tela.proposta.mapa.segmentos|tojson }}' role="img" aria-label="{{ tela.proposta.mapa.descricao }}"></canvas>
+      </div>
+      <p class="analise-helice-legenda" aria-hidden="true">Posições proporcionais ao alvo de {{ tela.comprimento }} pb; a hélice não está em escala.</p>
+
+      <div class="mapa mapa-compacto" data-encaixe role="img" aria-label="{{ tela.proposta.mapa.descricao }}">
+        <div class="mapa-trilho"></div>
+        {% for s in tela.proposta.mapa.segmentos %}
+          {% set d = "%.2f"|format(loop.index0 * 0.09) %}
+          {% set fam = m.familia(s.regiao)|trim %}
+          <div class="mapa-regiao mapa-regiao-{{ s.regiao }} mapa-familia-{{ fam }}{% if s.fantasma %} mapa-fantasma{% endif %}" style="left: {{ s.esquerda }}%; width: {{ s.largura }}%; --d: {{ d }}s"></div>
+          <span class="mapa-rotulo mapa-familia-{{ fam }}{% if loop.index0 % 2 == 0 %} mapa-rotulo-cima{% else %} mapa-rotulo-baixo{% endif %}{% if s.fantasma %} mapa-rotulo-fantasma{% endif %}" style="left: calc({{ s.esquerda }}% + {{ s.largura }}% / 2); --d: {{ d }}s">{{ s.nome }}</span>
+        {% endfor %}
+        {% for t in tela.proposta.mapa.ticks %}
+          <div class="mapa-marca" style="left: {{ t.esquerda }}%"></div>
+          <span class="mapa-numero mapa-numero-{{ t.alinhamento }}" style="left: {{ t.esquerda }}%">{{ t.valor }}</span>
+        {% endfor %}
+      </div>
+
+      <div class="tabela-rolagem" tabindex="0" role="region" aria-label="Tabela dos primers da proposta">
+        <table class="tabela">
+          <thead>
+            <tr>
+              <th scope="col">Primer</th>
+              <th scope="col">Sequência 5′→3′</th>
+              <th scope="col">Região</th>
+              <th scope="col" class="num"><span class="nc">nt</span></th>
+              <th scope="col" class="num"><span class="sr-only">Copiar</span></th>
+            </tr>
+          </thead>
+          <tbody data-revelar>
+            {% for r in tela.proposta.primers %}
+              <tr>
+                <td>{{ m.etiqueta(r.nome, r.lado) }}</td>
+                <td class="seq">{{ r.seq }}{% if r.seq2 %}<span class="seq-juncao" aria-label="junção das partes">·</span>{{ r.seq2 }}{% endif %}</td>
+                <td class="secundario">{{ r.regiao }}</td>
+                <td class="num">{{ r.nt }}</td>
+                <td class="num">
+                  {% if r.copiar %}
+                    <button class="botao botao-secundario botao-pequeno" type="button" data-copiar="{{ r.copiar }}" aria-label="Copiar sequência do {{ r.nome }}">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="8" y="8" width="12" height="12" rx="2"></rect>
+                        <path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"></path>
+                      </svg>
+                      <span>Copiar</span>
+                    </button>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if tela.proposta.nota %}
+        <p class="nota">{{ tela.proposta.nota }}</p>
+      {% endif %}
+    </section>
+  {% endif %}
+{% endif %}
+{% endblock %}

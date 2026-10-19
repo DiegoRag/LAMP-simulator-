@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" type="image/svg+xml" href="/static/icone.svg">
+  <title>{% block titulo %}{% endblock %}</title>
+  <link rel="preload" href="/static/fontes/open-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <script>(function(){var d=document.documentElement,m=null;d.classList.add("js");try{m=localStorage.getItem("lamp-movimento");}catch(e){}var r=m?m==="reduzido":!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);if(r){d.classList.add("movimento-reduzido");}setTimeout(function(){if(!d.classList.contains("app-pronto")){d.classList.add("revelar-tudo");}},4000);})();</script>
+  <link rel="stylesheet" href="/static/estilo.css">
+  <script src="/static/helice.js" defer></script>
+  <script src="/static/app.js" defer></script>
+</head>
+<body data-espera-analise="{{ base.espera.analise_ms }}" data-espera-desenho="{{ base.espera.desenho_ms }}" data-espera-envio="{{ base.espera.envio_ms }}">
+  <a class="pular" href="#conteudo">Pular para o conteúdo</a>
+  <header class="barra-topo">
+    <div class="barra-topo-interna">
+      <a class="marca" href="/" aria-label="LAMP Primers, início">
+        <svg class="marca-icone" width="32" height="32" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="7" fill="#112F83"></rect>
+          <path d="M11 6h10v4l-2 15a3 3 0 0 1-6 0L11 10z" fill="#FFFFFF" fill-opacity=".16" stroke="#FFFFFF" stroke-width="1.4" stroke-linejoin="round"></path>
+          <path d="M11.7 13.5h8.6l-1.3 11a3 3 0 0 1-6 0z" fill="#E6397F"></path>
+          <path d="M12.2 18.5h7.6l-0.8 6a3 3 0 0 1-6 0z" fill="#F5B800"></path>
+        </svg>
+        <span class="marca-texto">
+          <span class="marca-nome">LAMP Primers</span>
+          <span class="marca-projeto" title="{{ base.projeto }}">{{ base.projeto }}</span>
+        </span>
+      </a>
+      <nav class="trilho" aria-label="Etapas do trabalho">
+        <ol class="trilho-lista">
+          {% for e in base.etapas %}
+            <li class="trilho-etapa trilho-{{ e.estado }}">
+              <a class="trilho-link" href="{{ e.href }}"{% if e.estado == "atual" %} aria-current="step"{% endif %}>
+                <span class="trilho-ponto" aria-hidden="true">{{ e.numero }}</span>
+                <span class="trilho-nome">{{ e.nome }}</span>
+                {% if e.estado == "feita" %}<span class="sr-only"> (feita)</span>{% endif %}
+              </a>
+            </li>
+          {% endfor %}
+        </ol>
+      </nav>
+      <div class="barra-topo-direita">
+        <a class="link-topo" href="/tubos"{% if base.pagina == "tubos" %} aria-current="page"{% endif %}>Tubos</a>
+        <a class="link-topo" href="/parametros"{% if base.pagina == "parametros" %} aria-current="page"{% endif %}>Parâmetros</a>
+        <button type="button" class="alternar-movimento" data-alternar-movimento aria-pressed="true" aria-label="Animações" title="Liga ou desliga as animações neste navegador">
+          <span class="alternar-movimento-trilho" aria-hidden="true"><span class="alternar-movimento-botao"></span></span>
+          <span class="alternar-movimento-texto">Animações</span>
+        </button>
+        <span class="selo-local" title="O servidor só escuta em 127.0.0.1 e guarda os arquivos em memória até parar.">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path>
+            <path d="M8.5 12l2.5 2.5 4.5-5"></path>
+          </svg>
+          <span class="selo-local-texto">Só nesta máquina</span>
+        </span>
+      </div>
+    </div>
+  </header>
+  <main id="conteudo" class="pagina" tabindex="-1">
+    <div class="folha">
+      {% if mensagem %}
+        <div class="aviso aviso-mensagem {% if mensagem.tipo == 'erro' %}aviso-erro{% else %}aviso-info{% endif %}" role="{% if mensagem.tipo == 'erro' %}alert{% else %}status{% endif %}">
+          {% if mensagem.tipo == "erro" %}
+            <svg class="aviso-icone" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3l10 18H2z"></path>
+              <path d="M12 10v5"></path>
+              <circle cx="12" cy="18" r="0.9" fill="currentColor"></circle>
+            </svg>
+          {% else %}
+            <svg class="aviso-icone" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M12 11v6"></path>
+              <circle cx="12" cy="7.5" r="0.9" fill="currentColor"></circle>
+            </svg>
+          {% endif %}
+          <div class="aviso-texto">
+            <p>{{ mensagem.texto }}</p>
+          </div>
+        </div>
+      {% endif %}
+      {% block conteudo %}{% endblock %}
+      <footer class="rodape-folha">
+        <span class="rodape-versao">{{ base.ramo }} @ {{ base.commit }}</span>
+        <span class="rodape-aviso">{{ base.aviso }}</span>
+        <span class="rodape-determinismo">Mesma entrada e mesmo config, mesmo resultado.</span>
+      </footer>
+    </div>
+  </main>
+  <div id="tela-espera" class="espera" hidden role="dialog" aria-modal="true" aria-labelledby="espera-titulo">
+    <div class="espera-topo">
+      <span class="espera-marca">
+        <svg class="marca-icone" width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="7" fill="#112F83"></rect>
+          <path d="M11 6h10v4l-2 15a3 3 0 0 1-6 0L11 10z" fill="#FFFFFF" fill-opacity=".16" stroke="#FFFFFF" stroke-width="1.4" stroke-linejoin="round"></path>
+          <path d="M11.7 13.5h8.6l-1.3 11a3 3 0 0 1-6 0z" fill="#E6397F"></path>
+          <path d="M12.2 18.5h7.6l-0.8 6a3 3 0 0 1-6 0z" fill="#F5B800"></path>
+        </svg>
+        LAMP Primers
+      </span>
+      <span class="espera-local">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"></path>
+          <path d="M8.5 12l2.5 2.5 4.5-5"></path>
+        </svg>
+        Processando só nesta máquina
+      </span>
+    </div>
+    <div class="espera-centro">
+      <h2 id="espera-titulo" class="espera-titulo" tabindex="-1">
+        <span data-espera-titulo>Análise</span>
+        <span class="titulo-tag" data-espera-tag></span>
+      </h2>
+      <canvas class="helice helice-espera" data-helice="espera" aria-hidden="true"></canvas>
+      <ol class="espera-etapas" data-espera-etapas aria-hidden="true"></ol>
+      <div class="espera-progresso">
+        <div class="espera-progresso-barra" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <span class="espera-progresso-preenchido"></span>
+        </div>
+        <span class="espera-progresso-valor" data-espera-valor aria-hidden="true">0 %</span>
+      </div>
+      <p class="espera-etapa-atual" data-espera-etapa aria-live="polite"></p>
+    </div>
+    <aside class="espera-dica" aria-label="Dica">
+      <span class="espera-dica-rotulo">Você sabia?</span>
+      <p class="espera-dica-texto" data-espera-dica></p>
+    </aside>
+  </div>
+</body>
+</html>
