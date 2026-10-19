@@ -31,7 +31,7 @@ jobs:
     name: Verificações do repositório
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Convenção herdada da esteira do lamp-firmware, verificação 2. O
       # acompanhamento automático de dependências avisa quando uma versão fica
@@ -66,11 +66,11 @@ jobs:
     name: Estilo, testes e determinismo
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # 3.12 é o piso: numpy 2.5.2 e scipy 1.18.1 não instalam em 3.11, que era
       # a versão da CI do lampsim antes da fusão.
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
