@@ -13,15 +13,15 @@
 # para 3.11 (requires_python >= 3.12 no PyPI, conferido em 16/10/2026).
 
 # --- cadeia física do gerador: química -> pH -> espectro -> cor ---
-numpy==2.5.2
+numpy==2.5.4
 scipy==1.18.1          # brentq, curve_fit: equilibrio acido-base e ajuste da cinetica
 pillow==12.3.0         # PIL: render da bandeja 3x3 e saida PNG (ESP secao 6)
 scikit-image==0.26.0   # skimage.color.rgb2lab: conversao para Lab, eixo de progresso
 
 # --- decisão, avaliação e métricas ---
-scikit-learn==1.9.0    # K-Means, GMM, DBSCAN, hierarquico, ARI, silhouette (PROT secao 5)
-pandas==3.0.5          # manifesto do conjunto e tabelas de resultado
-matplotlib==3.11.1     # curva de erro por tempo de decisao (PROT secao 6)
+scikit-learn==1.9.1    # K-Means, GMM, DBSCAN, hierarquico, ARI, silhouette (PROT secao 5)
+pandas==3.0.6          # manifesto do conjunto e tabelas de resultado
+matplotlib==3.11.2     # curva de erro por tempo de decisao (PROT secao 6)
 
 # Deliberadamente ausente:
 #   pyarrow — só entra se o manifesto for Parquet. A ESP secao 6 deixa a escolha
@@ -34,11 +34,11 @@ biopython==1.88       # complemento reverso, leitura de FASTA, tabelas NN de San
 
 # --- testes e estilo ---
 pytest==9.1.1
-ruff==0.16.10          # regras e linha de 110 herdadas da CI do lampsim (Henrique Prado)
+ruff==0.17.1          # regras e linha de 110 herdadas da CI do lampsim (Henrique Prado)
 
 # --- interface web local (src/interface) ---
-fastapi==0.142.2
-starlette==1.7.0          # fixada junto com o fastapi
+fastapi==0.143.2
+starlette==1.8.0          # fixada junto com o fastapi
 uvicorn==0.54.0
 jinja2==3.1.6
 python-multipart==0.0.32  # envio de arquivos em formulário
