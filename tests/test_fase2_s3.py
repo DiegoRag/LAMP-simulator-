@@ -104,8 +104,8 @@ def test_app_nenhum_runtime_error_chega_ao_usuario(monkeypatch):
 
     resp_analisar = cliente.post("/analisar", follow_redirects=False)
     assert resp_analisar.status_code == 303
-    assert resp_analisar.headers["location"] == "/"
+    assert resp_analisar.headers["location"] == "/dados"
 
-    resp_inicio = cliente.get("/")
+    resp_inicio = cliente.get("/dados")
     assert resp_inicio.status_code == 200
     assert "falha simulada do primer3" in resp_inicio.text

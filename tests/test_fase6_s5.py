@@ -90,7 +90,7 @@ def test_sem_alvo_nao_ha_selecao():
     resultado = json.loads(arquivos["resultado.json"])
     assert resultado["alvo"] is None and resultado["eficiencia_prevista"] is None
     app = criar_app(RAIZ)
-    sessao = app.state.sessao
+    sessao = app.state.sessoes.obter(None)[0].sessao
     sessao.carregar_conjunto("conjunto_ok.csv", (DADOS / "conjunto_ok.csv").read_bytes())
     execucao = sessao.analisar()
     assert execucao.origem == "usuario"

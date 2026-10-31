@@ -1,0 +1,23 @@
+{% extends "base_marca.html" %}
+
+{% block titulo %}LampSim · {{ tela.titulo }}{% endblock %}
+
+{% block classe_corpo %} marca-analise{% endblock %}
+
+{% block estilos_extra %}<link rel="stylesheet" href="/static/marca-analise.css">{% endblock %}
+
+{% block conteudo %}
+<section class="analise-vazia" aria-labelledby="analise-vazia-titulo">
+  <div class="visor analise-vazia-visor">
+    <span class="visor-canto visor-canto-no" aria-hidden="true"></span>
+    <span class="visor-canto visor-canto-ne" aria-hidden="true"></span>
+    <span class="visor-canto visor-canto-so" aria-hidden="true"></span>
+    <span class="visor-canto visor-canto-se" aria-hidden="true"></span>
+    <div class="analise-vazia-conteudo">
+      <h1 id="analise-vazia-titulo" class="analise-vazia-titulo">{{ tela.titulo }}</h1>
+      <p class="analise-vazia-texto">{{ tela.texto }}</p>
+      <a class="botao botao-principal analise-vazia-acao" href="{{ tela.url_acao }}">{{ tela.rotulo_acao }}</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base_marca.html" %}
+{% block titulo %}LampSim · Passo 1 de 2: primers{% endblock %}
+{% block classe_corpo %} marca-passo{% endblock %}
+{% block conteudo %}
+<section class="passo" aria-labelledby="passo-titulo">
+  <div class="passo-coluna">
+    <p class="passo-indicador">
+      <span class="passo-trilho" aria-hidden="true">
+        <span class="passo-segmento passo-segmento-feito"></span>
+        <span class="passo-segmento{% if tela.passo == 2 %} passo-segmento-feito{% endif %}"></span>
+      </span>
+      Passo {{ tela.passo }} de {{ tela.total }}
+    </p>
+    <h1 id="passo-titulo" class="passo-titulo">Envie o conjunto de primers</h1>
+    <div id="passo-explicacao" class="passo-explicacao">
+      <p>Um arquivo CSV com as colunas nome e sequencia, ou um FASTA com um registro por primer. Sequências sempre de 5′ para 3′.</p>
+      <p>Nomes aceitos: F3, B3, F2, F1c, B2, B1c, FIP, BIP, LF e LB.</p>
+    </div>
+    <pre class="passo-exemplo"><code>nome,sequencia
+F3,GTGACAGACTCTCCTTAGATA
+B3,TGTTGCTGGATTGTCTGTT</code></pre>
+    {% if tela.primers %}
+    <p class="passo-resumo">Já carregado: <strong>{{ tela.primers.nome_arquivo }}</strong>. <a class="passo-trocar" href="/testar/alvo">Continuar para o passo 2</a></p>
+    {% endif %}
+    <form class="envio" method="post" action="{{ tela.acao }}" enctype="multipart/form-data"
+          data-envio-automatico>
+      <div class="visor envio-visor">
+        <span class="visor-canto visor-canto-no" aria-hidden="true"></span>
+        <span class="visor-canto visor-canto-ne" aria-hidden="true"></span>
+        <span class="visor-canto visor-canto-so" aria-hidden="true"></span>
+        <span class="visor-canto visor-canto-se" aria-hidden="true"></span>
+        <input class="envio-arquivo" type="file" id="{{ tela.id_campo }}" name="arquivo"
+               accept="{{ tela.aceita }}"
+               aria-describedby="passo-explicacao{% if erro %} passo-erro{% endif %}"
+               {% if erro %}aria-invalid="true"{% endif %}>
+        <label class="botao-arquivo" for="{{ tela.id_campo }}">
+          <svg class="botao-arquivo-icone" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 15v4h16v-4"></path></svg>
+          <span data-envio-rotulo>{{ tela.rotulo_botao }}</span>
+        </label>
+      </div>
+      <noscript><button class="botao botao-secundario envio-sem-js" type="submit">Enviar</button></noscript>
+      {% if erro %}
+      <div class="erro-envio" id="passo-erro" role="alert">
+        <svg class="erro-envio-icone" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"></path><path d="M12 10v5"></path><circle cx="12" cy="18" r="0.9" fill="currentColor"></circle></svg>
+        <p class="erro-envio-texto">{{ erro }}</p>
+      </div>
+      {% endif %}
+    </form>
+  </div>
+</section>
+{% endblock %}

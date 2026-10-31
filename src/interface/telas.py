@@ -97,15 +97,61 @@ TUBOS_PADRAO_SEMENTE = 2026
 TUBOS_PADRAO_MANUAL = {"ph_inicial": 8.7, "queda_ph": 2.4}
 
 PADRAO_SERIE = [
-    {"nome": "10⁶ cópias", "copias": 1000000.0, "papel": "amostra"},
-    {"nome": "10⁵ cópias", "copias": 100000.0, "papel": "amostra"},
-    {"nome": "10⁴ cópias", "copias": 10000.0, "papel": "amostra"},
-    {"nome": "10³ cópias", "copias": 1000.0, "papel": "amostra"},
-    {"nome": "100 cópias", "copias": 100.0, "papel": "amostra"},
-    {"nome": "10 cópias", "copias": 10.0, "papel": "amostra"},
-    {"nome": "1 cópia", "copias": 1.0, "papel": "amostra"},
-    {"nome": "Controle negativo", "copias": 0.0, "papel": "controle_negativo"},
-    {"nome": "Controle positivo", "copias": 100000.0, "papel": "controle_positivo", "eficiencia": 1.0},
+    {
+        "nome": "Carga muito alta",
+        "detalhe": "1 milhão de cópias do gene",
+        "copias": 1000000.0,
+        "papel": "amostra",
+    },
+    {
+        "nome": "Carga alta",
+        "detalhe": "100 mil cópias do gene",
+        "copias": 100000.0,
+        "papel": "amostra",
+    },
+    {
+        "nome": "Carga média",
+        "detalhe": "10 mil cópias do gene",
+        "copias": 10000.0,
+        "papel": "amostra",
+    },
+    {
+        "nome": "Carga baixa",
+        "detalhe": "mil cópias do gene",
+        "copias": 1000.0,
+        "papel": "amostra",
+    },
+    {
+        "nome": "Carga muito baixa",
+        "detalhe": "100 cópias do gene",
+        "copias": 100.0,
+        "papel": "amostra",
+    },
+    {
+        "nome": "Quase nada",
+        "detalhe": "10 cópias do gene",
+        "copias": 10.0,
+        "papel": "amostra",
+    },
+    {
+        "nome": "Uma única cópia",
+        "detalhe": "1 cópia do gene",
+        "copias": 1.0,
+        "papel": "amostra",
+    },
+    {
+        "nome": "Controle sem DNA",
+        "detalhe": "deve ficar rosa",
+        "copias": 0.0,
+        "papel": "controle_negativo",
+    },
+    {
+        "nome": "Controle com DNA",
+        "detalhe": "deve ficar amarelo",
+        "copias": 100000.0,
+        "papel": "controle_positivo",
+        "eficiencia": 1.0,
+    },
 ]
 
 PADRAO_TUBOS = [
@@ -1926,6 +1972,7 @@ def _serie_simulada(cfg_tubos: dict) -> list[dict]:
         papel = item.get("papel", "amostra")
         tubo = {
             "nome": str(item.get("nome", "Tubo")),
+            "detalhe": str(item.get("detalhe", "")),
             "copias": copias,
             "papel": papel if papel in PAPEIS else "amostra",
         }
@@ -2063,8 +2110,10 @@ def tela_tubos(
 
     t = eixo_minutos(duracao_max, passo)
     t_min = [round(float(x), 3) for x in t]
-    tubos = simular_tubos(eficiencia, _serie_simulada(cfg_tubos), t, semente)
-    for tubo in tubos:
+    serie_itens = _serie_simulada(cfg_tubos)
+    tubos = simular_tubos(eficiencia, serie_itens, t, semente)
+    for tubo, item_serie in zip(tubos, serie_itens, strict=True):
+        tubo["detalhe"] = str(item_serie.get("detalhe", ""))
         t_pos = _primeiro_positivo(t_min, tubo["ph"])
         tubo["t_positivo_min"] = t_pos
         tubo["t_positivo_texto"] = "não vira" if t_pos is None else f"{num(t_pos, 1)} min"

@@ -20,7 +20,11 @@ def test_inicio() -> None:
     cliente = TestClient(criar_app(RAIZ))
     res = cliente.get("/")
     assert res.status_code == 200
-    assert "<title>LAMP Primers — Início</title>" in res.text
+    assert "Exames genéticos em qualquer lugar, a qualquer hora." in res.text
+
+    res_dados = cliente.get("/dados")
+    assert res_dados.status_code == 200
+    assert "<title>LAMP Primers — Início</title>" in res_dados.text
 
 
 def test_fluxo_analise() -> None:
@@ -31,9 +35,9 @@ def test_fluxo_analise() -> None:
         follow_redirects=False,
     )
     assert res.status_code == 303
-    assert res.headers["location"] == "/"
+    assert res.headers["location"] == "/dados"
 
-    res = cliente.get("/")
+    res = cliente.get("/dados")
     assert "conjunto_ok.csv" in res.text
 
     res = cliente.post(
@@ -42,9 +46,9 @@ def test_fluxo_analise() -> None:
         follow_redirects=False,
     )
     assert res.status_code == 303
-    assert res.headers["location"] == "/"
+    assert res.headers["location"] == "/dados"
 
-    res = cliente.get("/")
+    res = cliente.get("/dados")
     assert "alvo_ok.fasta" in res.text
 
     res = cliente.post("/analisar", follow_redirects=False)
@@ -53,10 +57,13 @@ def test_fluxo_analise() -> None:
 
     res = cliente.get("/analise/1")
     assert res.status_code == 200
-    assert "<title>LAMP Primers — Análise</title>" in res.text
-    assert "GTGACAGACTCTCCTTAGATA" in res.text
-    assert "GTAAACCCCCAAGTGTTATTGG" in res.text
-    assert "CGCATATGGATTCTGTAC" in res.text
+    assert "<title>LampSim · Análise: conjunto_ok × alvo_ok</title>" in res.text
+
+    res_primers = cliente.get("/analise/1/primers")
+    assert res_primers.status_code == 200
+    assert "GTGACAGACTCTCCTTAGATA" in res_primers.text
+    assert "GTAAACCCCCAAGTGTTATTGG" in res_primers.text
+    assert "CGCATATGGATTCTGTAC" in res_primers.text
 
     res = cliente.get("/analise", follow_redirects=False)
     assert res.status_code == 303
@@ -99,7 +106,7 @@ def test_fluxo_desenho() -> None:
     cliente = TestClient(criar_app(RAIZ))
     res = cliente.post("/exemplo", data={"nome": "conjunto_ok — sintético"}, follow_redirects=False)
     assert res.status_code == 303
-    assert res.headers["location"] == "/"
+    assert res.headers["location"] == "/dados"
 
     res = cliente.post("/desenhar", follow_redirects=False)
     assert res.status_code == 303
@@ -107,7 +114,7 @@ def test_fluxo_desenho() -> None:
 
     res = cliente.get("/desenho/1")
     assert res.status_code == 200
-    assert "<title>LAMP Primers — Desenho</title>" in res.text
+    assert "<title>LampSim · Desenho: alvo_ok</title>" in res.text
     assert primers.desenho.AVISO in res.text
     assert "TGACAGACTCTCCTTAGATAGCTAA" in res.text
     assert "ACCCCCAAGTGTTATTGGCAAGTT" in res.text
@@ -136,19 +143,19 @@ def test_mensagens_uma_vez() -> None:
     cliente = TestClient(criar_app(RAIZ))
     res = cliente.post("/analisar", follow_redirects=False)
     assert res.status_code == 303
-    assert res.headers["location"] == "/"
+    assert res.headers["location"] == "/dados"
 
-    res = cliente.get("/")
+    res = cliente.get("/dados")
     assert "Carregue um conjunto de primers antes de analisar." in res.text
 
-    res = cliente.get("/")
+    res = cliente.get("/dados")
     assert "Carregue um conjunto de primers antes de analisar." not in res.text
 
     res = cliente.post("/desenhar", follow_redirects=False)
     assert res.status_code == 303
-    assert res.headers["location"] == "/"
+    assert res.headers["location"] == "/dados"
 
-    res = cliente.get("/")
+    res = cliente.get("/dados")
     assert "Carregue a sequência-alvo antes de desenhar." in res.text
 
     res = cliente.post(
@@ -157,9 +164,9 @@ def test_mensagens_uma_vez() -> None:
         follow_redirects=False,
     )
     assert res.status_code == 303
-    assert res.headers["location"] == "/"
+    assert res.headers["location"] == "/dados"
 
-    res = cliente.get("/")
+    res = cliente.get("/dados")
     assert "x.csv: Cabeçalho inválido na linha 1" in res.text
 
 
@@ -198,7 +205,10 @@ def test_parametros() -> None:
     cliente = TestClient(criar_app(RAIZ))
     res = cliente.get("/parametros")
     assert res.status_code == 200
-    assert "<title>LAMP Primers — Parâmetros</title>" in res.text
+    assert (
+        "<title>LampSim · Parâmetros</title>" in res.text
+        or "<title>LAMP Primers — Parâmetros</title>" in res.text
+    )
     assert "config/primers.toml" in res.text
 
 
@@ -227,7 +237,7 @@ def test_destino_em_json() -> None:
     cliente = TestClient(criar_app(RAIZ))
     res = cliente.post("/exemplo", data={"nome": "conjunto_ok — sintético"}, headers=CABECALHO)
     assert res.status_code == 200
-    assert res.json() == {"destino": "/"}
+    assert res.json() == {"destino": "/dados"}
 
     res = cliente.post("/analisar", headers=CABECALHO)
     assert res.status_code == 200
@@ -247,12 +257,12 @@ def test_destino_em_json_com_erro() -> None:
     cliente = TestClient(criar_app(RAIZ))
     res = cliente.post("/analisar", headers=CABECALHO)
     assert res.status_code == 200
-    assert res.json() == {"destino": "/"}
+    assert res.json() == {"destino": "/dados"}
 
-    res = cliente.get("/")
+    res = cliente.get("/dados")
     assert "Carregue um conjunto de primers antes de analisar." in res.text
 
-    res = cliente.get("/")
+    res = cliente.get("/dados")
     assert "Carregue um conjunto de primers antes de analisar." not in res.text
 
 
@@ -265,9 +275,9 @@ def test_envio_de_arquivo_em_json() -> None:
         headers=CABECALHO,
     )
     assert res.status_code == 200
-    assert res.json() == {"destino": "/"}
+    assert res.json() == {"destino": "/dados"}
 
-    res = cliente.get("/")
+    res = cliente.get("/dados")
     assert "conjunto_ok.csv" in res.text
 
 
@@ -306,15 +316,21 @@ def test_pagina_tubos() -> None:
     assert "0,0 min" in res.text
 
 
-def test_links_navegacao_tubos() -> None:
-    """Verifica link para /tubos no topo de /, /parametros e /tubos, com aria-current em /tubos."""
+def test_links_navegacao() -> None:
+    """Verifica links de navegação da barra superior sem link para /tubos."""
     cliente = TestClient(criar_app(RAIZ))
-    for rota in ("/", "/parametros", "/tubos"):
+    for rota in ("/dados", "/tubos"):
         res = cliente.get(rota)
         assert res.status_code == 200
-        assert 'href="/tubos"' in res.text
-        if rota == "/tubos":
-            assert '<a class="link-topo" href="/tubos" aria-current="page">Tubos</a>' in res.text
-        else:
-            assert '<a class="link-topo" href="/tubos">Tubos</a>' in res.text
+        assert '<a class="link-topo" href="/testar">Testar primers</a>' in res.text
+        assert '<a class="link-topo" href="/analise">Análise</a>' in res.text
+        assert '<a class="link-topo" href="/">Início</a>' in res.text
+        assert '<a class="link-topo" href="/parametros">Parâmetros</a>' in res.text
+        assert 'class="link-topo" href="/tubos"' not in res.text
 
+    res_param = cliente.get("/parametros")
+    assert res_param.status_code == 200
+    assert (
+        '<a class="marca-nav-link" href="/parametros" aria-current="page">Parâmetros</a>'
+        in res_param.text
+    )

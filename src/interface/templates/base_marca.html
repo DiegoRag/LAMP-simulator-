@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>{% block titulo %}LampSim{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="/static/marca/lampsim_simbolo_colorido.svg">
+  <link rel="preload" href="/static/fontes/montserrat-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/marca.css">
+  {% block estilos_extra %}{% endblock %}
+  <script src="/static/fluxo.js" defer></script>
+</head>
+<body class="marca{% block classe_corpo %}{% endblock %}">
+  <a class="marca-pular" href="#conteudo">Pular para o conteúdo</a>
+  <header class="marca-barra">
+    {% block barra_logo %}
+    <a class="marca-barra-logo" href="/"><img src="/static/marca/lampsim_horizontal_colorido.svg"
+       alt="LampSim" width="160" height="54"></a>
+    {% endblock %}
+    <nav class="marca-nav" aria-label="Principal">
+      <ul class="marca-nav-lista">
+        {% for link in marca.links %}
+        <li><a class="marca-nav-link" href="{{ link.href }}"{% if link.atual %} aria-current="page"{% endif %}>{{ link.rotulo }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+  </header>
+  <main id="conteudo" class="marca-principal" tabindex="-1">
+    {% block conteudo %}{% endblock %}
+  </main>
+  {% block rodape %}
+  <footer class="marca-rodape">
+    <p class="marca-rodape-aviso">{{ marca.aviso }}</p>
+    <p class="marca-rodape-projeto"><img class="marca-rodape-logo"
+       src="/static/marca/lamp_horizontal_colorido.svg" alt="Projeto LAMP" width="160"
+       height="64"><span>Senac + FMABC</span></p>
+  </footer>
+  {% endblock %}
+  {% block depois_do_rodape %}{% endblock %}
+</body>
+</html>

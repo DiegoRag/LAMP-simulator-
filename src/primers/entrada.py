@@ -9,7 +9,8 @@ from pathlib import Path
 
 from Bio import SeqIO
 
-from primers.modelo import ConjuntoLAMP, Regiao, bases_compativeis, normalizar, rc
+from primers.casamento import _so_acgt, ocorrencias_aproximadas, ocorrencias_compativeis
+from primers.modelo import ConjuntoLAMP, Regiao, normalizar, rc
 
 LIGANTES_PADRAO: tuple[str, ...] = ("", "TTTT", "TTT", "TTTTT")
 
@@ -130,17 +131,11 @@ def ler_alvos(caminho: str | Path) -> list[RegistroAlvo]:
 
 def _contem_compativel(fita: str, s: str) -> bool:
     """Verifica se s ocorre em fita considerando compatibilidade IUPAC."""
-    if not s or not fita:
+    if not s or not fita or len(s) > len(fita):
         return False
-    k = len(s)
-    if k > len(fita):
-        return False
-    if set(s) <= {"A", "C", "G", "T"} and set(fita) <= {"A", "C", "G", "T"}:
+    if _so_acgt(s) and _so_acgt(fita):
         return fita.find(s) != -1
-    for i in range(len(fita) - k + 1):
-        if all(bases_compativeis(s[j], fita[i + j]) for j in range(k)):
-            return True
-    return False
+    return bool(ocorrencias_compativeis(fita, s))
 
 
 def escolher_registro_alvo(
@@ -269,23 +264,13 @@ def _buscar_ancora(
     if exatas:
         return exatas
 
-    tem_iupac = not (set(seq) <= {"A", "C", "G", "T"} and set(s_busca) <= {"A", "C", "G", "T"})
+    tem_iupac = not (_so_acgt(seq) and _so_acgt(s_busca))
     if tem_iupac:
-        for idx in range(lim):
-            sub = s_busca[idx : idx + k]
-            if all(bases_compativeis(a, b) for a, b in zip(seq, sub, strict=True)):
-                exatas.append((idx, 0))
-        if exatas:
-            return exatas
+        exatas_iupac = [(r.ini, 0) for r in ocorrencias_compativeis(s_busca, seq, limite_ini=lim)]
+        if exatas_iupac:
+            return exatas_iupac
 
-    aprox: list[tuple[int, int]] = []
-    for idx in range(lim):
-        sub = s_busca[idx : idx + k]
-        erros = sum(1 for a, b in zip(seq, sub, strict=True) if not bases_compativeis(a, b))
-        if erros <= max_e:
-            aprox.append((idx, erros))
-    aprox.sort(key=lambda x: (x[1], x[0]))
-    return aprox
+    return ocorrencias_aproximadas(seq, s_busca, max_e, lim)
 
 
 def ler_conjunto(
@@ -625,10 +610,7 @@ def ler_conjunto(
                             r_f3 = fd["r_f3"]
                             r_b3c = fd["r_b3c"]
 
-                            tem_iupac_esq = not (
-                                set(seq_esq) <= {"A", "C", "G", "T"}
-                                and set(s_busca) <= {"A", "C", "G", "T"}
-                            )
+                            tem_iupac_esq = not (_so_acgt(seq_esq) and _so_acgt(s_busca))
                             pos_esq_exatas: list[int] = []
                             if not tem_iupac_esq:
                                 curr = jan_ini
@@ -640,18 +622,12 @@ def ler_conjunto(
                                         pos_esq_exatas.append(idx)
                                     curr = idx + 1
                             else:
-                                for idx in range(jan_ini, jan_fim - k_esq + 1):
+                                for r in ocorrencias_compativeis(s_busca[jan_ini:jan_fim], seq_esq):
+                                    idx = jan_ini + r.ini
                                     if not circular or idx < len(alvo):
-                                        if all(
-                                            bases_compativeis(seq_esq[j], s_busca[idx + j])
-                                            for j in range(k_esq)
-                                        ):
-                                            pos_esq_exatas.append(idx)
+                                        pos_esq_exatas.append(idx)
 
-                            tem_iupac_dir = not (
-                                set(seq_dir) <= {"A", "C", "G", "T"}
-                                and set(s_busca) <= {"A", "C", "G", "T"}
-                            )
+                            tem_iupac_dir = not (_so_acgt(seq_dir) and _so_acgt(s_busca))
                             pos_dir_exatas: list[int] = []
                             if not tem_iupac_dir:
                                 curr = jan_ini
@@ -662,12 +638,8 @@ def ler_conjunto(
                                     pos_dir_exatas.append(idx)
                                     curr = idx + 1
                             else:
-                                for idx in range(jan_ini, jan_fim - k_dir + 1):
-                                    if all(
-                                        bases_compativeis(seq_dir[j], s_busca[idx + j])
-                                        for j in range(k_dir)
-                                    ):
-                                        pos_dir_exatas.append(idx)
+                                for r in ocorrencias_compativeis(s_busca[jan_ini:jan_fim], seq_dir):
+                                    pos_dir_exatas.append(jan_ini + r.ini)
 
                             pares_encontrados: list[tuple[Regiao, Regiao, int, int, int]] = []
                             for p_e in pos_esq_exatas:
@@ -687,15 +659,28 @@ def ler_conjunto(
                                     jan_fim - k_esq + 1,
                                     len(alvo) if circular else jan_fim - k_esq + 1,
                                 )
-                                for p_e in range(jan_ini, lim_esq):
-                                    sub_esq = s_busca[p_e : p_e + k_esq]
-                                    e_e = sum(
-                                        1
-                                        for a, b in zip(seq_esq, sub_esq, strict=True)
-                                        if not bases_compativeis(a, b)
+                                cands_esq = sorted(
+                                    (
+                                        (jan_ini + p, e)
+                                        for p, e in ocorrencias_aproximadas(
+                                            seq_esq,
+                                            s_busca[jan_ini:jan_fim],
+                                            max_erros,
+                                            lim_esq - jan_ini,
+                                        )
+                                    ),
+                                    key=lambda t: t[0],
+                                )
+                                erros_dir = {
+                                    i + jan_ini: e
+                                    for i, e in ocorrencias_aproximadas(
+                                        seq_dir,
+                                        s_busca[jan_ini:jan_fim],
+                                        max_erros,
+                                        jan_fim - jan_ini - k_dir + 1,
                                     )
-                                    if e_e > max_erros:
-                                        continue
+                                }
+                                for p_e, e_e in cands_esq:
                                     for d_loop in range(25, 86):
                                         if tipo == "FIP":
                                             p_d = p_e + d_loop
@@ -703,12 +688,9 @@ def ler_conjunto(
                                             p_d = p_e + k_esq - k_dir + d_loop
                                         if p_d <= p_e or p_d + k_dir > jan_fim:
                                             continue
-                                        sub_dir = s_busca[p_d : p_d + k_dir]
-                                        e_d = sum(
-                                            1
-                                            for a, b in zip(seq_dir, sub_dir, strict=True)
-                                            if not bases_compativeis(a, b)
-                                        )
+                                        e_d = erros_dir.get(p_d)
+                                        if e_d is None:
+                                            continue
                                         if e_e + e_d <= max_erros:
                                             r_e = Regiao(p_e, p_e + k_esq)
                                             r_d = Regiao(p_d, p_d + k_dir)

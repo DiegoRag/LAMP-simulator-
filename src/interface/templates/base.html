@@ -28,22 +28,13 @@
           <span class="marca-projeto" title="{{ base.projeto }}">{{ base.projeto }}</span>
         </span>
       </a>
-      <nav class="trilho" aria-label="Etapas do trabalho">
-        <ol class="trilho-lista">
-          {% for e in base.etapas %}
-            <li class="trilho-etapa trilho-{{ e.estado }}">
-              <a class="trilho-link" href="{{ e.href }}"{% if e.estado == "atual" %} aria-current="step"{% endif %}>
-                <span class="trilho-ponto" aria-hidden="true">{{ e.numero }}</span>
-                <span class="trilho-nome">{{ e.nome }}</span>
-                {% if e.estado == "feita" %}<span class="sr-only"> (feita)</span>{% endif %}
-              </a>
-            </li>
-          {% endfor %}
-        </ol>
+      <nav class="marca-nav-antiga" aria-label="Principal">
+        <a class="link-topo" href="/">Início</a>
+        <a class="link-topo" href="/testar">Testar primers</a>
+        <a class="link-topo" href="/analise">Análise</a>
+        <a class="link-topo" href="/parametros"{% if base.pagina == "parametros" %} aria-current="page"{% endif %}>Parâmetros</a>
       </nav>
       <div class="barra-topo-direita">
-        <a class="link-topo" href="/tubos"{% if base.pagina == "tubos" %} aria-current="page"{% endif %}>Tubos</a>
-        <a class="link-topo" href="/parametros"{% if base.pagina == "parametros" %} aria-current="page"{% endif %}>Parâmetros</a>
         <button type="button" class="alternar-movimento" data-alternar-movimento aria-pressed="true" aria-label="Animações" title="Liga ou desliga as animações neste navegador">
           <span class="alternar-movimento-trilho" aria-hidden="true"><span class="alternar-movimento-botao"></span></span>
           <span class="alternar-movimento-texto">Animações</span>

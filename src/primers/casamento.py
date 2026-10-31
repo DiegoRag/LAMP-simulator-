@@ -8,6 +8,7 @@ vetorizada em numpy: cada base vira uma máscara de 4 bits (A=1, C=2, G=4, T=8; 
 união) e duas bases casam quando as máscaras se cruzam, como em modelo.bases_compativeis.
 """
 
+import functools
 import re
 from dataclasses import dataclass
 
@@ -16,6 +17,7 @@ import numpy as np
 from primers.modelo import BASES_IUPAC, ConjuntoLAMP, Regiao, bases_compativeis, rc
 
 _NAO_ACGT = re.compile(r"[^ACGT]")
+_NAO_ACGTN = re.compile(r"[^ACGTN]")
 REGIOES_RC: frozenset[str] = frozenset({"F1", "B2c", "B3c", "LF"})
 ORDEM_REGIOES: tuple[str, ...] = ("F3", "F2", "LF", "F1", "B1c", "LB", "B2c", "B3c")
 REGIAO_PARA_PRIMER: dict[str, str] = {
@@ -35,6 +37,74 @@ _BITS = {"A": 1, "C": 2, "G": 4, "T": 8}
 _MASCARA = np.zeros(256, dtype=np.uint8)
 for _letra, _bases in BASES_IUPAC.items():
     _MASCARA[ord(_letra)] = sum(_BITS[b] for b in _bases)
+
+_MASCARA_TEXTO = np.copy(_MASCARA)
+_MASCARA_TEXTO[ord("N")] = 0
+_MASCARA_TEXTO[ord("n")] = 0
+
+K_INDICE = 6  # bases do prefixo indexado longo (blocos >= 6 nt)
+K_INDICE_CURTO = 4  # bases do prefixo indexado curto (blocos de 4 ou 5 nt)
+TEXTO_MIN_INDICE = 20000  # abaixo disso, o caminho de hoje (mais barato que montar o índice)
+NUM_BASES_DNA = 4
+TAM_INDICE_KMERS = NUM_BASES_DNA**K_INDICE  # 4096 fatias
+TAM_FATIAS_INDICE = TAM_INDICE_KMERS + 1  # 4097
+
+_BASE_VALOR = {"A": 0, "C": 1, "G": 2, "T": 3}
+_MAPA_BASE4 = np.zeros(256, dtype=np.uint8)
+_MAPA_BASE4[ord("A")] = 0
+_MAPA_BASE4[ord("C")] = 1
+_MAPA_BASE4[ord("G")] = 2
+_MAPA_BASE4[ord("T")] = 3
+
+
+def _codigo_kmer(kmer: str) -> int:
+    """Código numérico de um k-mer em base 4 (A=0, C=1, G=2, T=3)."""
+    cod = 0
+    for ch in kmer:
+        cod = (cod << 2) | _BASE_VALOR[ch]
+    return cod
+
+
+@functools.lru_cache(maxsize=8)
+def _indice_kmers(texto: str, k: int = K_INDICE) -> tuple[np.ndarray, np.ndarray] | None:
+    """(posições ordenadas pelo código do k-mer, inícios de cada código em 4**k+1 fatias)
+    para textos só com ACGT e N; None se houver outro código IUPAC no texto."""
+    if _NAO_ACGTN.search(texto) is not None:
+        return None
+
+    n = len(texto)
+    n_kmers = n - k + 1
+    tam_indice = NUM_BASES_DNA**k
+    tam_fatias = tam_indice + 1
+    if n_kmers <= 0:
+        return np.empty(0, dtype=np.int64), np.zeros(tam_fatias, dtype=np.int64)
+
+    arr = np.frombuffer(texto.encode("ascii"), dtype=np.uint8)
+    vals = _MAPA_BASE4[arr]
+
+    codigos = vals[:n_kmers].astype(np.int32)
+    for shift in range(1, k):
+        codigos = (codigos << 2) | vals[shift : shift + n_kmers]
+
+    if "N" in texto:
+        mask_n = arr == ord("N")
+        has_n = mask_n[:n_kmers].copy()
+        for shift in range(1, k):
+            has_n |= mask_n[shift : shift + n_kmers]
+        valid_pos = np.flatnonzero(~has_n)
+        codigos_validos = codigos[valid_pos]
+    else:
+        valid_pos = np.arange(n_kmers, dtype=np.int64)
+        codigos_validos = codigos
+
+    ordem = np.argsort(codigos_validos, kind="stable")
+    posicoes = valid_pos[ordem]
+
+    contagens = np.bincount(codigos_validos, minlength=tam_indice)
+    fatias = np.zeros(tam_fatias, dtype=np.int64)
+    fatias[1:] = np.cumsum(contagens)
+
+    return posicoes, fatias
 
 
 @dataclass(frozen=True)
@@ -71,14 +141,29 @@ class ErroDeBase:
     distancia_ponta: int  # nt entre a base e essa ponta; 0 = a própria base terminal
 
 
+@functools.lru_cache(maxsize=16)
 def _so_acgt(texto: str) -> bool:
     """True se o texto só tem A, C, G e T (para no primeiro caractere diferente)."""
     return _NAO_ACGT.search(texto) is None
 
 
+@functools.lru_cache(maxsize=16)
 def _mascaras(texto: str) -> np.ndarray:
     """Máscara de 4 bits de cada base do texto (0 para caractere fora do IUPAC)."""
     return _MASCARA[np.frombuffer(texto.encode("ascii", "replace"), dtype=np.uint8)]
+
+
+@functools.lru_cache(maxsize=16)
+def _mascaras_texto(texto: str) -> np.ndarray:
+    """Máscara de 4 bits de cada base do texto onde se busca (N -> 0)."""
+    return _MASCARA_TEXTO[np.frombuffer(texto.encode("ascii", "replace"), dtype=np.uint8)]
+
+
+def base_casa_no_alvo(base_primer: str, base_alvo: str) -> bool:
+    """True se base_primer casa com base_alvo, tratando 'N' no alvo como incompatível."""
+    if base_alvo in ("N", "n"):
+        return False
+    return bases_compativeis(base_primer, base_alvo)
 
 
 def _inicios_sem_erro(seq_m: np.ndarray, alvo_m: np.ndarray, n_inicios: int) -> np.ndarray:
@@ -92,6 +177,37 @@ def _inicios_sem_erro(seq_m: np.ndarray, alvo_m: np.ndarray, n_inicios: int) -> 
             break
         idx = idx[(alvo_m[idx + j] & seq_m[j]) != 0]
     return idx
+
+
+def _inicios_bloco(
+    seq_m_bloco: np.ndarray,
+    bloco_str: str,
+    alvo_m: np.ndarray,
+    texto: str,
+    a: int,
+    n: int,
+) -> np.ndarray:
+    """Inícios i em [0, n) em que seq_m_bloco (que começa em a) casa com alvo_m[a:], sem erro."""
+    if (
+        len(texto) >= TEXTO_MIN_INDICE
+        and len(bloco_str) >= K_INDICE_CURTO
+        and _so_acgt(bloco_str)
+    ):
+        k = K_INDICE if len(bloco_str) >= K_INDICE else K_INDICE_CURTO
+        indice = _indice_kmers(texto, k)
+        if indice is not None:
+            posicoes, fatias = indice
+            cod = _codigo_kmer(bloco_str[:k])
+            pos_bloco = posicoes[fatias[cod] : fatias[cod + 1]]
+            inicios = pos_bloco - a
+            inicios = inicios[(inicios >= 0) & (inicios < n)]
+            for j in range(k, len(seq_m_bloco)):
+                if inicios.size == 0:
+                    break
+                inicios = inicios[(alvo_m[inicios + a + j] & seq_m_bloco[j]) != 0]
+            return inicios
+
+    return _inicios_sem_erro(seq_m_bloco, alvo_m[a:], n)
 
 
 def _erros_nos_inicios(seq_m: np.ndarray, alvo_m: np.ndarray, inicios: np.ndarray) -> np.ndarray:
@@ -127,8 +243,56 @@ def ocorrencias_compativeis(
             pos = idx + 1
         return res
 
-    inicios = _inicios_sem_erro(_mascaras(sub), _mascaras(texto[: max_start + k - 1]), max_start)
+    inicios = _inicios_sem_erro(_mascaras(sub), _mascaras_texto(texto[: max_start + k - 1]), max_start)
     return [Regiao(int(i), int(i) + k) for i in inicios]
+
+
+def ocorrencias_aproximadas(
+    seq: str,
+    texto: str,
+    max_erros: int,
+    max_ini: int,
+) -> list[tuple[int, int]]:
+    """Todos os inícios i < max_ini (e i <= len(texto) - len(seq)) em que seq casa com
+    texto[i:i+k] com até max_erros incompatibilidades IUPAC, como (i, erros), ordenados por
+    (erros, i)."""
+    k = len(seq)
+    if k == 0 or k > len(texto) or max_ini <= 0 or max_erros < 0:
+        return []
+    n = min(max_ini, len(texto) - k + 1)
+    if n <= 0:
+        return []
+
+    seq_m = _mascaras(seq)
+    alvo_m = _mascaras_texto(texto)
+
+    if max_erros + 1 <= k:
+        m = max_erros
+        blocos = [((r * k) // (m + 1), ((r + 1) * k) // (m + 1)) for r in range(m + 1)]
+        inicios_lista = [
+            _inicios_bloco(seq_m[a:b], seq[a:b], alvo_m, texto, a, n) for a, b in blocos
+        ]
+        inicios_presentes = [arr for arr in inicios_lista if arr.size > 0]
+        if not inicios_presentes:
+            return []
+        if len(inicios_presentes) == 1:
+            inicios = inicios_presentes[0]
+        else:
+            inicios = np.unique(np.concatenate(inicios_presentes))
+    else:
+        inicios = np.arange(n, dtype=np.int64)
+
+    if inicios.size == 0:
+        return []
+
+    erros = _erros_nos_inicios(seq_m, alvo_m, inicios)
+    mascara = erros <= max_erros
+    inicios_ok = inicios[mascara]
+    erros_ok = erros[mascara]
+
+    res = [(int(i), int(e)) for i, e in zip(inicios_ok, erros_ok, strict=True)]
+    res.sort(key=lambda x: (x[1], x[0]))
+    return res
 
 
 def regioes_do_conjunto(conjunto: ConjuntoLAMP) -> list[tuple[str, str]]:
@@ -266,9 +430,10 @@ def _buscar_em_fita(
         return None
 
     # Busca exata rápida em C
-    pos_exato = texto.find(seq, ini_b, fim_b)
-    if pos_exato != -1:
-        return Posicao(regiao=Regiao(pos_exato, pos_exato + k), diferencas=(), fita=fita_id)
+    if _so_acgt(seq):
+        pos_exato = texto.find(seq, ini_b, fim_b)
+        if pos_exato != -1:
+            return Posicao(regiao=Regiao(pos_exato, pos_exato + k), diferencas=(), fita=fita_id)
 
     # Se puramente ACGT e max_erros <= 0, como a busca exata falhou, não há casamento com 0 erros.
     if max_erros is not None and max_erros <= 0 and _so_acgt(seq) and _so_acgt(texto):
@@ -298,14 +463,27 @@ def _buscar_em_fita(
                 if ini_b <= i <= fim_b - k:
                     set_i.add(i)
                 curr = j + 1
-        candidatos_i = sorted(set_i)
+        if not set_i:
+            return None
+        inicios = np.array(sorted(set_i), dtype=np.int64)
+        erros = _erros_nos_inicios(_mascaras(seq), _mascaras_texto(texto), inicios)
+        melhor = int(np.argmin(erros))
+        if int(erros[melhor]) > max_erros:
+            return None
+        i = int(inicios[melhor])
+        difs = tuple(
+            Diferenca(posicao=i + idx, esperado=seq[idx], no_alvo=texto[i + idx])
+            for idx in range(k)
+            if not base_casa_no_alvo(seq[idx], texto[i + idx])
+        )
+        return Posicao(regiao=Regiao(i, i + k), diferencas=difs, fita=fita_id)
     else:
         # Vetorizado (numpy), com o mesmo resultado do laço abaixo: a primeira posição com o
         # menor número de erros, se não passar do teto. Com teto m, uma janela com até m erros
         # tem um dos m + 1 blocos da sequência sem erro (casa dos pombos): só esses inícios
         # são conferidos.
         teto = max(0, max_erros if max_erros is not None else k)
-        alvo_m = _mascaras(texto[ini_b:fim_b])
+        alvo_m = _mascaras_texto(texto[ini_b:fim_b])
         seq_m = _mascaras(seq)
         n = fim_b - ini_b - k + 1
         if teto < k:
@@ -325,39 +503,9 @@ def _buscar_em_fita(
         difs = tuple(
             Diferenca(posicao=i + idx, esperado=seq[idx], no_alvo=texto[i + idx])
             for idx in range(k)
-            if not bases_compativeis(seq[idx], texto[i + idx])
+            if not base_casa_no_alvo(seq[idx], texto[i + idx])
         )
         return Posicao(regiao=Regiao(i, i + k), diferencas=difs, fita=fita_id)
-
-    menor_dif: int | None = None
-    melhor_pos: Posicao | None = None
-
-    for i in candidatos_i:
-        teto = max_erros if max_erros is not None else k
-        if menor_dif is not None:
-            teto = min(teto, menor_dif - 1)
-
-        erros = 0
-        ultrapassou = False
-        for idx in range(k):
-            if not bases_compativeis(seq[idx], texto[i + idx]):
-                erros += 1
-                if erros > teto:
-                    ultrapassou = True
-                    break
-
-        if not ultrapassou:
-            difs = tuple(
-                Diferenca(posicao=i + idx, esperado=seq[idx], no_alvo=texto[i + idx])
-                for idx in range(k)
-                if not bases_compativeis(seq[idx], texto[i + idx])
-            )
-            menor_dif = len(difs)
-            melhor_pos = Posicao(regiao=Regiao(i, i + k), diferencas=difs, fita=fita_id)
-            if menor_dif == 0:
-                break
-
-    return melhor_pos
 
 
 def melhor_posicao(

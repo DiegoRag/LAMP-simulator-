@@ -65,6 +65,7 @@
       <span class="tubo-tampa" aria-hidden="true"></span>
       <span class="tubo-corpo" aria-hidden="true"><span class="tubo-liquido" style="--cor: {{ cor }}"></span></span>
       <span class="tubo-nome" data-tubo-nome>{{ t.nome }}</span>
+      {% if t.detalhe %}<span class="tubo-detalhe">{{ t.detalhe }}</span>{% endif %}
       <span class="tubo-pct mono" data-tubo-pct>—</span>
     </button>
     {% endfor %}
@@ -124,7 +125,7 @@
       <tbody>
         {% for t in tela.tubos %}
         <tr data-tubos-linha="{{ loop.index0 }}">
-          <th scope="row">{{ t.nome }}</th>
+          <th scope="row">{{ t.nome }}{% if t.detalhe %}<span class="tubos-tabela-detalhe">{{ t.detalhe }}</span>{% endif %}</th>
           <td>{{ t.papel_texto }}</td>
           <td class="num mono">{{ t.copias_media_texto }}</td>
           <td class="num mono">{{ t.copias_texto }}</td>

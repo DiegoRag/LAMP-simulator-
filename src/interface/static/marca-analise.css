@@ -1,0 +1,959 @@
+/*
+ * LampSim: estilos da análise detalhada em abas (marca-analise.css).
+ * Cobre a moldura de detalhes, abas, resumo/KPIs, mapa de regiões,
+ * tabela de distâncias e primers, grupos de violações, matriz de heterodímeros
+ * e a tela de análise vazia.
+ * Depende dos tokens de identidade definidos em marca.css (--azul, --rosa,
+ * --amarelo, --papel, --azul-suave, --texto-suave, --erro, --erro-fundo,
+ * Montserrat e cantos do visor).
+ */
+
+/* Container da análise detalhada */
+
+.detalhe {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(72rem + 2 * var(--margem));
+  margin-inline: auto;
+  padding-inline: var(--margem);
+  padding-block: clamp(40px, 6vw, 72px);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  color: var(--azul);
+  font-family: var(--fonte);
+}
+
+/* Cabeçalho de detalhes */
+
+.detalhe-topo {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detalhe-voltar {
+  font-size: var(--tam-nota);
+  font-weight: 600;
+  color: var(--texto-suave);
+  margin: 0;
+}
+
+.detalhe-voltar a {
+  color: var(--texto-suave);
+  text-decoration: underline;
+}
+
+.detalhe-voltar a:hover {
+  color: var(--azul);
+}
+
+.detalhe-titulo {
+  font-size: var(--tam-titulo);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin: 0;
+}
+
+.detalhe-par {
+  font-size: var(--tam-frase);
+  font-weight: 600;
+  line-height: 1.3;
+  margin: -8px 0 0;
+  overflow-wrap: anywhere;
+  text-transform: none;
+}
+
+.detalhe-intro {
+  font-size: var(--tam-texto);
+  font-weight: 400;
+  color: var(--texto-suave);
+  max-width: 62ch;
+  margin-top: 8px;
+}
+
+.detalhe-intro code {
+  font-size: 15px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-weight: 400;
+}
+
+.detalhe-acoes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.detalhe-acoes .botao {
+  gap: 8px;
+}
+
+.detalhe-acoes .form-inline {
+  display: inline;
+  margin: 0;
+}
+
+/* Navegação por abas */
+
+.detalhe-abas {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-bottom: 2px solid var(--azul-suave);
+}
+
+.detalhe-abas ul {
+  display: flex;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.detalhe-aba {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-size: var(--tam-texto);
+  font-weight: 600;
+  color: var(--azul);
+  text-decoration: none;
+  border-bottom: 4px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: border-color var(--t-rapido) var(--curva);
+}
+
+.detalhe-aba:hover {
+  border-bottom-color: var(--azul);
+}
+
+.detalhe-aba[aria-current="page"] {
+  border-bottom-color: var(--rosa);
+  color: var(--azul);
+}
+
+.detalhe-aba-contagem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--tam-nota);
+  font-weight: 700;
+  background: var(--erro);
+  color: var(--branco);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.detalhe-aba-contagem-zero {
+  background: var(--azul-suave);
+  color: var(--azul);
+}
+
+/* Painel de conteúdo da aba */
+
+.detalhe-painel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.detalhe-painel-titulo {
+  font-size: var(--tam-frase);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 12px;
+}
+
+.detalhe-legenda {
+  font-size: var(--tam-nota);
+  color: var(--texto-suave);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.detalhe-guia {
+  font-size: var(--tam-texto);
+  color: var(--texto-suave);
+  line-height: 1.55;
+  margin-top: 12px;
+}
+
+/* KPIs da aba Resumo */
+
+.detalhe-numeros {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  background: var(--papel);
+  padding: 24px;
+  margin: 0;
+}
+
+@media (max-width: 840px) {
+  .detalhe-numeros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 500px) {
+  .detalhe-numeros {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.detalhe-numero {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detalhe-numero-rotulo {
+  font-size: var(--tam-nota);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.detalhe-numero-valor {
+  margin: 0;
+  font-size: var(--tam-titulo);
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--azul);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.detalhe-numero-resto {
+  font-size: var(--tam-frase);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.detalhe-numero-detalhe {
+  margin: 0;
+  font-size: var(--tam-nota);
+  color: var(--texto-suave);
+  line-height: 1.4;
+}
+
+.detalhe-numero-viol .detalhe-numero-valor,
+.detalhe-numero-valor-viol {
+  color: var(--erro);
+}
+
+.detalhe-numero-calibrar .detalhe-numero-valor,
+.detalhe-numero-valor-calibrar {
+  color: var(--texto-suave);
+  text-decoration: underline dotted 2px;
+}
+
+/* Avisos e links */
+
+.detalhe-aviso,
+.aviso {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px 20px;
+  background: var(--papel);
+  border-left: 4px solid var(--amarelo);
+  font-size: var(--tam-texto);
+  line-height: 1.5;
+}
+
+.aviso-icone {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--azul);
+}
+
+.aviso-texto {
+  min-width: 0;
+}
+
+.aviso-texto p + p,
+.aviso-texto p + ul,
+.aviso-texto ul + p {
+  margin-top: 6px;
+}
+
+.lista-avisos {
+  padding-left: 18px;
+  margin: 0;
+}
+
+.aviso-links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: var(--tam-nota);
+  font-weight: 600;
+}
+
+.aviso-links a {
+  text-decoration: underline;
+}
+
+.linha-alternar {
+  font-size: var(--tam-nota);
+  font-weight: 600;
+  margin: 0;
+}
+
+.linha-alternar a {
+  text-decoration: underline;
+}
+
+.detalhe-alternar {
+  font-size: var(--tam-nota);
+  color: var(--texto-suave);
+  margin: 0;
+}
+
+.detalhe-alternar a {
+  color: var(--texto-suave);
+  text-decoration: underline;
+}
+
+.detalhe-alternar a:hover {
+  color: var(--azul);
+}
+
+/* Tabelas e rolagem */
+
+.tabela-rolagem {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--tam-nota);
+  color: var(--azul);
+  font-variant-numeric: tabular-nums;
+}
+
+.tabela th,
+.tabela td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--azul-suave);
+  vertical-align: middle;
+}
+
+.tabela th {
+  font-weight: 600;
+  background: var(--azul-suave);
+  white-space: nowrap;
+}
+
+.tabela .num,
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.mono {
+  font-variant-numeric: tabular-nums;
+}
+
+.seq {
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: .03em;
+  overflow-wrap: anywhere;
+}
+
+.seq-juncao {
+  color: var(--amarelo);
+  font-weight: 800;
+  margin: 0 4px;
+}
+
+.secundario {
+  color: var(--texto-suave);
+}
+
+.viol {
+  color: var(--erro);
+  font-weight: 700;
+}
+
+.calibrar {
+  color: var(--texto-suave);
+  font-weight: 700;
+  text-decoration: underline dotted;
+}
+
+.dg-ponta {
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--texto-suave);
+  margin-left: 2px;
+}
+
+.nc,
+.nc * {
+  font-variant-caps: normal;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Pílulas de situação */
+
+.pilula {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: var(--tam-nota);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pilula-ok {
+  color: var(--azul);
+  background: var(--azul-suave);
+}
+
+.pilula-viol {
+  color: var(--erro);
+  background: var(--erro-fundo);
+}
+
+.pilula-calibrar {
+  color: var(--texto-suave);
+  background: var(--papel);
+  text-decoration: underline dotted;
+}
+
+.pilula-neutro {
+  color: var(--texto-suave);
+  background: var(--azul-suave);
+}
+
+.pilula-info {
+  color: var(--azul);
+  background: var(--azul-suave);
+}
+
+/* Etiquetas de famílias de primers */
+
+.etiqueta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 38px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.etiqueta-externo {
+  color: var(--azul);
+  background: var(--azul-suave);
+}
+
+.etiqueta-fip {
+  color: var(--rosa-texto);
+  background: #FDF0F4;
+}
+
+.etiqueta-bip {
+  color: #8A5A00;
+  background: #FEF8E7;
+}
+
+.etiqueta-loop {
+  color: #2E7D32;
+  background: #EDF7ED;
+}
+
+.etiqueta-outro {
+  color: var(--texto-suave);
+  background: var(--azul-suave);
+}
+
+/* Mapa de regiões no alvo */
+
+.mapa {
+  position: relative;
+  height: 140px;
+  margin-bottom: 24px;
+}
+
+.mapa-com-fora {
+  height: 172px;
+}
+
+.mapa-trilho {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 49px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--azul-suave);
+}
+
+.mapa-regiao {
+  position: absolute;
+  top: 40px;
+  height: 24px;
+  border-radius: 3px;
+  background: var(--cor, var(--azul));
+}
+
+.mapa-familia-externo {
+  --cor: var(--azul);
+}
+
+.mapa-familia-fip {
+  --cor: var(--rosa);
+}
+
+.mapa-familia-bip {
+  --cor: var(--amarelo);
+}
+
+.mapa-familia-loop {
+  --cor: #2E7D32;
+}
+
+.mapa-familia-outro {
+  --cor: var(--texto-suave);
+}
+
+.mapa-regiao.mapa-regiao-F1 {
+  --cor: #F48FB1;
+}
+
+.mapa-regiao.mapa-regiao-B1c {
+  --cor: #FFE082;
+}
+
+.mapa .mapa-fantasma {
+  background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--cor) 24%, transparent) 0 3px, transparent 3px 7px);
+  border: 1.5px dashed var(--cor);
+}
+
+.mapa-rotulo {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.mapa-rotulo.mapa-familia-externo {
+  color: var(--azul);
+}
+
+.mapa-rotulo.mapa-familia-fip {
+  color: var(--rosa-texto);
+}
+
+.mapa-rotulo.mapa-familia-bip {
+  color: #8A5A00;
+}
+
+.mapa-rotulo.mapa-familia-loop {
+  color: #2E7D32;
+}
+
+.mapa-rotulo.mapa-familia-outro {
+  color: var(--texto-suave);
+}
+
+.mapa-rotulo-cima {
+  top: 10px;
+}
+
+.mapa-rotulo-cima::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 1px;
+  height: 10px;
+  background: currentColor;
+  opacity: .45;
+  margin-top: 4px;
+}
+
+.mapa-rotulo-baixo {
+  top: 78px;
+}
+
+.mapa-rotulo-baixo::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  width: 1px;
+  height: 10px;
+  background: currentColor;
+  opacity: .45;
+  margin-bottom: 4px;
+}
+
+.mapa-rotulo-fantasma {
+  font-style: italic;
+}
+
+.mapa-marca {
+  position: absolute;
+  top: 104px;
+  width: 1px;
+  height: 6px;
+  background: var(--texto-suave);
+}
+
+.mapa-numero {
+  position: absolute;
+  top: 112px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.mapa-numero-meio {
+  transform: translateX(-50%);
+}
+
+.mapa-numero-fim {
+  transform: translateX(-100%);
+}
+
+.mapa-numero-inicio {
+  transform: none;
+}
+
+.mapa-fora {
+  position: absolute;
+  top: 134px;
+  height: 9px;
+  border: 1.5px solid var(--erro);
+  border-top: none;
+  border-radius: 0 0 3px 3px;
+}
+
+.mapa-fora-texto {
+  position: absolute;
+  top: 148px;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--erro);
+  white-space: nowrap;
+}
+
+/* Régua mini das distâncias */
+
+.celula-regua {
+  width: 160px;
+}
+
+.regua-mini {
+  position: relative;
+  display: block;
+  width: 140px;
+  height: 14px;
+  background: linear-gradient(var(--azul-suave), var(--azul-suave)) center / 100% 1px no-repeat;
+}
+
+.regua-mini-zero {
+  position: absolute;
+  top: -2px;
+  width: 1px;
+  height: 18px;
+  background: var(--texto-suave);
+}
+
+.regua-mini-banda {
+  position: absolute;
+  top: 2px;
+  height: 10px;
+  background: var(--azul-suave);
+  border: 1px solid var(--azul);
+  border-radius: 2px;
+}
+
+.regua-mini-marca {
+  position: absolute;
+  top: -1px;
+  width: 3px;
+  height: 16px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+}
+
+.regua-mini-ok {
+  background: var(--azul);
+}
+
+.regua-mini-viol {
+  background: var(--erro);
+}
+
+/* Matriz de heterodímeros */
+
+.matriz {
+  border-collapse: separate;
+  border-spacing: 4px;
+  margin: -4px;
+}
+
+.matriz th,
+.matriz td {
+  border: none;
+  padding: 0;
+}
+
+.matriz-topo,
+.matriz-lado {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  padding: 4px 6px;
+}
+
+.matriz-topo {
+  text-align: center;
+}
+
+.matriz-lado {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.matriz-celula {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  height: 40px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  box-sizing: border-box;
+}
+
+.matriz-faixa-0 {
+  background: #15344A;
+  color: #FFFFFF;
+}
+
+.matriz-faixa-1 {
+  background: #2A5473;
+  color: #FFFFFF;
+}
+
+.matriz-faixa-2 {
+  background: #567C9C;
+  color: #FFFFFF;
+}
+
+.matriz-faixa-3 {
+  background: #A8C0D4;
+  color: var(--azul);
+}
+
+.matriz-faixa-4 {
+  background: #E8EDF1;
+  color: var(--azul);
+}
+
+.matriz-diagonal {
+  border: 2px dashed var(--azul);
+}
+
+.matriz-legenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 16px;
+  font-size: var(--tam-nota);
+  color: var(--texto-suave);
+}
+
+.matriz-legenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.matriz-amostra {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.matriz-resumo {
+  margin-top: 12px;
+  font-size: var(--tam-nota);
+  line-height: 1.5;
+  color: var(--azul);
+}
+
+/* Grupos e lista de violações */
+
+.grupo-violacao {
+  margin-top: 24px;
+}
+
+.grupo-violacao + .grupo-violacao {
+  margin-top: 32px;
+}
+
+.grupo-violacao-titulo {
+  font-size: var(--tam-frase);
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.grupo-violacao-titulo.grupo-viol {
+  color: var(--erro);
+}
+
+.grupo-violacao-titulo.grupo-calibrar {
+  color: var(--texto-suave);
+}
+
+.lista-violacoes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.violacao {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--azul-suave);
+  font-size: var(--tam-texto);
+  line-height: 1.4;
+}
+
+.violacao-texto {
+  min-width: 0;
+}
+
+.violacao-faixa {
+  font-size: var(--tam-nota);
+  font-weight: 700;
+  color: var(--texto-suave);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Notas e textos vazios */
+
+.nota {
+  font-size: var(--tam-nota);
+  color: var(--texto-suave);
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+.texto-vazio {
+  font-size: var(--tam-texto);
+  color: var(--texto-suave);
+  padding: 24px 0;
+}
+
+/* Hélice 3D */
+
+.analise-helice {
+  margin: 16px 0;
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding-inline: 12px 32px;
+}
+
+.helice {
+  width: 100%;
+  height: 210px; /* helice.js desenha a régua abaixo de cy + R + 30: com menos, os números cortam */
+  display: block;
+}
+
+.analise-helice-legenda {
+  font-size: var(--tam-nota);
+  color: var(--texto-suave);
+  margin-top: 6px;
+  margin-bottom: 16px;
+}
+
+/* Tela de análise vazia */
+
+.analise-vazia {
+  min-height: calc(100svh - var(--altura-barra));
+  display: grid;
+  place-items: center;
+  padding: var(--margem);
+}
+
+.analise-vazia-visor {
+  width: min(100%, 36rem);
+  text-align: center;
+}
+
+.analise-vazia-conteudo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.analise-vazia-titulo {
+  font-size: var(--tam-titulo);
+  font-weight: 700;
+  margin: 0;
+}
+
+.analise-vazia-texto {
+  font-size: var(--tam-texto);
+  color: var(--texto-suave);
+  max-width: 44ch;
+  margin: 0;
+}
+
+.analise-vazia-acao {
+  margin-top: 8px;
+}
+
+/* Preferência de movimento reduzido */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0s !important;
+  }
+}

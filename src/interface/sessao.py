@@ -380,6 +380,14 @@ class Sessao:
             self.execucoes.append(execucao)
             return execucao
 
+    def registrar(self, execucao: Execucao) -> Execucao:
+        """Guarda na sessão uma execução feita fora dela (num processo separado), com id novo."""
+        with self._lock:
+            execucao.id = self._proximo_id
+            self._proximo_id += 1
+            self.execucoes.append(execucao)
+            return execucao
+
     def execucao(self, id: int) -> Execucao:
         """Busca execução pelo identificador numérico ou levanta KeyError."""
         with self._lock:

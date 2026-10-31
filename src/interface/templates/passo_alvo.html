@@ -1,0 +1,55 @@
+{% extends "base_marca.html" %}
+{% block titulo %}LampSim · Passo 2 de 2: gene-alvo{% endblock %}
+{% block classe_corpo %} marca-passo{% endblock %}
+{% block conteudo %}
+<section class="passo" aria-labelledby="passo-titulo">
+  <div class="passo-coluna">
+    <p class="passo-indicador">
+      <span class="passo-trilho" aria-hidden="true">
+        <span class="passo-segmento passo-segmento-feito"></span>
+        <span class="passo-segmento{% if tela.passo == 2 %} passo-segmento-feito{% endif %}"></span>
+      </span>
+      Passo {{ tela.passo }} de {{ tela.total }}
+    </p>
+    <h1 id="passo-titulo" class="passo-titulo">Envie o gene-alvo</h1>
+    <div id="passo-explicacao" class="passo-explicacao">
+      <p>Um arquivo FASTA (.fasta, .fa ou .fna) com a sequência do gene que os primers devem reconhecer. Pode ter um ou vários registros; usamos o que mais combina com os primers.</p>
+    </div>
+    <p class="passo-resumo">Primers: <strong>{{ tela.primers.nome_arquivo }}</strong> · {{ tela.primers.resumo }} <a class="passo-trocar" href="/testar">Trocar primers</a></p>
+    <form class="envio" method="post" action="{{ tela.acao }}" enctype="multipart/form-data"
+          data-envio-automatico data-espera="fluxo" data-espera-ms="{{ tela.espera_ms }}">
+      <div class="visor envio-visor">
+        <span class="visor-canto visor-canto-no" aria-hidden="true"></span>
+        <span class="visor-canto visor-canto-ne" aria-hidden="true"></span>
+        <span class="visor-canto visor-canto-so" aria-hidden="true"></span>
+        <span class="visor-canto visor-canto-se" aria-hidden="true"></span>
+        <input class="envio-arquivo" type="file" id="{{ tela.id_campo }}" name="arquivo"
+               accept="{{ tela.aceita }}"
+               aria-describedby="passo-explicacao{% if erro %} passo-erro{% endif %}"
+               {% if erro %}aria-invalid="true"{% endif %}>
+        <label class="botao-arquivo" for="{{ tela.id_campo }}">
+          <svg class="botao-arquivo-icone" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4"></path><path d="M7 9l5-5 5 5"></path><path d="M4 15v4h16v-4"></path></svg>
+          <span data-envio-rotulo>{{ tela.rotulo_botao }}</span>
+        </label>
+      </div>
+      <noscript><button class="botao botao-secundario envio-sem-js" type="submit">Enviar</button></noscript>
+      {% if erro %}
+      <div class="erro-envio" id="passo-erro" role="alert">
+        <svg class="erro-envio-icone" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"></path><path d="M12 10v5"></path><circle cx="12" cy="18" r="0.9" fill="currentColor"></circle></svg>
+        <p class="erro-envio-texto">{{ erro }}</p>
+      </div>
+      {% endif %}
+    </form>
+  </div>
+</section>
+{% endblock %}
+{% block depois_do_rodape %}
+<div class="espera-fluxo" data-espera-fluxo hidden>
+  <div class="espera-fluxo-conteudo" role="status" aria-live="polite">
+    <span class="espera-fluxo-balanco" aria-hidden="true"><span class="espera-fluxo-tubo"><img
+      class="espera-fluxo-vortice" src="/static/vortice.svg" alt="" width="260" height="260"></span></span>
+    <p class="espera-fluxo-texto">Analisando os primers contra o gene-alvo…</p>
+    <p class="espera-fluxo-dica">Com um genoma inteiro isso pode levar até um minuto.</p>
+  </div>
+</div>
+{% endblock %}

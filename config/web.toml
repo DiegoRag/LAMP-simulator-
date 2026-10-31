@@ -15,6 +15,7 @@ alvo_desenho_max_pb = 2000
 [analise]
 # enquanto as faixas de Tm não forem calibradas, Tm fora da faixa aparece como "a calibrar"
 tm_como_calibracao = true
+tempo_max_s = 45   # até 45 s; genoma inteiro com FIP/BIP inteiros leva ~30 s
 
 [heterodimeros]
 # limites das 5 faixas de cor da matriz de heterodímeros; só visual
@@ -38,6 +39,7 @@ alvo     = "tests/dados/alvo_ok.fasta"
 analise_ms = 2600
 desenho_ms = 3200
 envio_ms   = 900
+fluxo_ms   = 3000   # passo 2 do fluxo guiado: a animação do vórtice roda isso antes do envio
 
 [tubos]
 # página /tubos: tempos em minutos de reação; a reprodução acelera pelo fator de velocidade
@@ -50,48 +52,58 @@ semente         = 2026    # sorteio do mix e das cópias de cada tubo: mesma sem
 
 # Série simulada com o conjunto analisado: diluições do alvo e os dois controles.
 # copias = média de cópias de molde por tubo (o lampsim sorteia o número real por Poisson).
+# nome em linguagem simples; detalhe aparece embaixo do nome
 [[tubos.serie]]
-nome   = "10⁶ cópias"
-copias = 1000000
-papel  = "amostra"
+nome    = "Carga muito alta"
+detalhe = "1 milhão de cópias do gene"
+copias  = 1000000
+papel   = "amostra"
 
 [[tubos.serie]]
-nome   = "10⁵ cópias"
-copias = 100000
-papel  = "amostra"
+nome    = "Carga alta"
+detalhe = "100 mil cópias do gene"
+copias  = 100000
+papel   = "amostra"
 
 [[tubos.serie]]
-nome   = "10⁴ cópias"
-copias = 10000
-papel  = "amostra"
+nome    = "Carga média"
+detalhe = "10 mil cópias do gene"
+copias  = 10000
+papel   = "amostra"
 
 [[tubos.serie]]
-nome   = "10³ cópias"
-copias = 1000
-papel  = "amostra"
+nome    = "Carga baixa"
+detalhe = "mil cópias do gene"
+copias  = 1000
+papel   = "amostra"
 
 [[tubos.serie]]
-nome   = "100 cópias"
-copias = 100
-papel  = "amostra"
+nome    = "Carga muito baixa"
+detalhe = "100 cópias do gene"
+copias  = 100
+papel   = "amostra"
 
 [[tubos.serie]]
-nome   = "10 cópias"
-copias = 10
-papel  = "amostra"
+nome    = "Quase nada"
+detalhe = "10 cópias do gene"
+copias  = 10
+papel   = "amostra"
 
 [[tubos.serie]]
-nome   = "1 cópia"
-copias = 1
-papel  = "amostra"
+nome    = "Uma única cópia"
+detalhe = "1 cópia do gene"
+copias  = 1
+papel   = "amostra"
 
 [[tubos.serie]]
-nome   = "Controle negativo"
-copias = 0
-papel  = "controle_negativo"
+nome    = "Controle sem DNA"
+detalhe = "deve ficar rosa"
+copias  = 0
+papel   = "controle_negativo"
 
 [[tubos.serie]]
-nome       = "Controle positivo"
+nome       = "Controle com DNA"
+detalhe    = "deve ficar amarelo"
 copias     = 100000
 papel      = "controle_positivo"
 eficiencia = 1.0          # molde próprio, que casa com o conjunto
@@ -164,3 +176,11 @@ curva = "linear"
 inicio = 0.0
 duracao = 30.0
 alcance = 0
+
+
+[sessoes]
+# cada navegador tem a sua sessão, identificada por um cookie aleatório
+cookie        = "lampsim_sessao"
+validade_min  = 120     # sessão sem uso por mais que isso é descartada
+max_sessoes   = 500     # acima disso, descarta a menos usada recentemente
+cookie_seguro = false   # true só atrás de HTTPS

@@ -1,5 +1,6 @@
 """Modelo de dados e convenção de orientação para primers LAMP."""
 
+import functools
 import itertools
 import math
 import re
@@ -27,6 +28,7 @@ BASES_IUPAC: dict[str, frozenset[str]] = {
 
 ALFABETO_IUPAC: frozenset[str] = frozenset(BASES_IUPAC.keys())
 
+_INVALIDO = re.compile(r"[^" + "".join(sorted(ALFABETO_IUPAC | {"U"})) + r"]")
 _RE_5P = re.compile(r"^\s*5(?:['′’`´]\s*[-–—:]?|[-–—])\s*")
 _RE_3P = re.compile(r"\s*(?:[-–—:]?\s*3['′’`´]|[-–—]\s*3)\s*$")
 
@@ -46,18 +48,25 @@ def normalizar(seq: str) -> str:
     sem despejar a sequência inteira na mensagem.
     """
     s = "".join(limpar_notacao_extremidade(seq).split()).upper()
-    for pos, char in enumerate(s, start=1):
-        if char not in ALFABETO_IUPAC and char != "U":
-            raise ValueError(
-                f"Caractere inválido '{char}' na posição {pos} "
-                "(esperado base IUPAC A, C, G, T, U ou N)."
-            )
+    m = _INVALIDO.search(s)
+    if m:
+        pos = m.start() + 1
+        char = m.group()
+        raise ValueError(
+            f"Caractere inválido '{char}' na posição {pos} "
+            "(esperado base IUPAC A, C, G, T, U ou N)."
+        )
     return s.replace("U", "T")
+
+
+@functools.lru_cache(maxsize=8)
+def _rc(seq: str) -> str:
+    return str(Seq(normalizar(seq)).reverse_complement())
 
 
 def rc(seq: str) -> str:
     """Retorna o complemento reverso da sequência normalizada usando Bio.Seq."""
-    return str(Seq(normalizar(seq)).reverse_complement())
+    return _rc(seq)
 
 
 def bases_compativeis(a: str, b: str) -> bool:

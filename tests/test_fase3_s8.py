@@ -91,10 +91,11 @@ def test_paginas_html_com_as_duas_tm():
         follow_redirects=False,
     )
     cliente.post("/analisar", follow_redirects=False)
-    analise = cliente.get("/analise/1").text
-    assert '<span class="nc">Tm</span> reação' in analise
-    assert "72,17" in analise
-    assert "diagonal = homodímero pela ponta 3′ (a coluna Homodímero" in analise
+    aba_primers = cliente.get("/analise/1/primers").text
+    assert '<span class="nc">Tm</span> reação' in aba_primers
+    assert "72,17" in aba_primers
+    aba_dimeros = cliente.get("/analise/1/dimeros").text
+    assert "diagonal = homodímero pela ponta 3′ (a coluna Homodímero" in aba_dimeros
     parametros = cliente.get("/parametros").text
     assert "Tm de referência (PrimerExplorer V5)" in parametros
     assert "Tm da reação (informativa)" in parametros

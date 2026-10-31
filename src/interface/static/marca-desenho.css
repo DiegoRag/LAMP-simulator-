@@ -1,0 +1,279 @@
+/*
+ * LampSim: estilos da tela de desenho de alternativas (marca-desenho.css).
+ * Cobre a busca (candidatos e resumo), o filtro agrupar, a tabela de ranking
+ * com linhas clicáveis e números tabulares, coord-dif e botões pequenos.
+ * Depende dos tokens de marca.css e dos estilos base de marca-analise.css.
+ */
+
+/* Seções e cabeçalhos */
+
+.detalhe .secao {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+  min-width: 0; /* item flex: sem isto a seção cresce até a largura da tabela do ranking */
+}
+
+.detalhe .secao-cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+.detalhe .secao-titulo,
+.detalhe .detalhe-secao-titulo {
+  font-size: var(--tam-frase);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--azul);
+}
+
+.detalhe .secao-legenda {
+  font-size: var(--tam-nota);
+  color: var(--texto-suave);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Busca: candidatos e resumo */
+
+.busca {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px 32px;
+  flex-wrap: wrap;
+  padding: 24px;
+  background: var(--papel);
+  border-radius: 4px;
+}
+
+.busca-candidatos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 300px;
+}
+
+.rotulo-pequeno {
+  font-size: var(--tam-nota);
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.busca-resumo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.busca-examinados {
+  font-size: var(--tam-nota);
+  color: var(--texto-suave);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.busca-examinados strong {
+  font-size: var(--tam-titulo);
+  font-weight: 700;
+  color: var(--azul);
+  line-height: 1;
+}
+
+/* Filtro agrupar variantes */
+
+.filtro-agrupar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--tam-nota);
+  font-weight: 600;
+  color: var(--azul);
+  cursor: pointer;
+}
+
+.filtro-agrupar input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--azul);
+  cursor: pointer;
+}
+
+.filtro-agrupar input[type="checkbox"]:focus-visible {
+  outline: 3px solid var(--azul);
+  outline-offset: 2px;
+}
+
+.filtro-agrupar label {
+  cursor: pointer;
+  user-select: none;
+}
+
+.link-noscript {
+  font-size: var(--tam-nota);
+  color: var(--texto-suave);
+  text-decoration: underline;
+  margin-left: 8px;
+}
+
+/* Tabela do ranking */
+
+.tabela-rolagem {
+  position: relative; /* prende o ::after do link da linha dentro da rolagem */
+}
+
+.tabela-ranking {
+  min-width: 640px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabela-ranking tbody tr {
+  position: relative;
+  transition: background-color var(--t-rapido) var(--curva);
+}
+
+.tabela-ranking tbody tr:hover td {
+  background-color: var(--papel);
+}
+
+.tabela-ranking tbody tr[aria-current="true"] td,
+.tabela-ranking tbody tr.ranking-selecionada td {
+  background-color: var(--azul-suave);
+}
+
+.tabela-ranking tbody tr[aria-current="true"] td:first-child,
+.tabela-ranking tbody tr.ranking-selecionada td:first-child {
+  box-shadow: inset 4px 0 0 var(--rosa);
+}
+
+.ranking-col-num {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ranking-link {
+  color: var(--azul);
+  text-decoration: none;
+}
+
+.ranking-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.ranking-link:focus-visible::after {
+  outline: 3px solid var(--azul);
+  outline-offset: -3px;
+}
+
+.ranking-extra {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--texto-suave);
+}
+
+.ranking-coord {
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--texto-suave);
+  white-space: nowrap;
+}
+
+.coord-dif {
+  color: var(--azul);
+  font-weight: 700;
+  text-decoration: underline 2px var(--rosa-texto);
+  text-underline-offset: 4px;
+}
+
+.ranking-avisos {
+  font-size: var(--tam-nota);
+  color: var(--texto-suave);
+  line-height: 1.4;
+}
+
+/* Botão pequeno */
+
+.botao-pequeno {
+  min-height: 36px;
+  padding: 4px 14px;
+  font-size: var(--tam-nota);
+  font-weight: 600;
+  gap: 6px;
+}
+
+.botao-pequeno svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Mapa compacto */
+
+.mapa-compacto {
+  height: 140px;
+}
+
+/* Ajustes responsivos para telas estreitas (até 375px) */
+
+@media (max-width: 600px) {
+  .busca {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .busca-resumo {
+    align-items: flex-start;
+  }
+
+  .busca-candidatos {
+    flex: 0 0 auto; /* em coluna, a base de 300px viraria altura vazia */
+  }
+
+  .detalhe .secao-cabecalho {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 500px) {
+  .detalhe-acoes {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .detalhe-acoes .botao {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .detalhe-acoes .form-inline {
+    width: 100%;
+    display: block;
+  }
+
+  .detalhe-acoes .form-inline .botao {
+    width: 100%;
+  }
+}

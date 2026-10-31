@@ -16,6 +16,7 @@ from primers.modelo import ConjuntoLAMP, Regiao, normalizar, rc
 from primers.termo import CondicoesReferencia, dg_extremidade, gc_pct, tm_referencia
 
 ORDEM_VERIFICACAO = ["F3", "B3", "F2", "F1c", "B2", "B1c", "LF", "LB"]
+JANELA_CADEIA_NT_PADRAO: int = 1000
 
 
 @dataclass(frozen=True)
@@ -269,7 +270,9 @@ def localizar_detalhado(
     eh_circular = (
         circular if circular is not None else bool((cfg or {}).get("alvo", {}).get("circular", False))
     )
-    max_erros = int((cfg or {}).get("casamento", {}).get("max_erros", 3))
+    casamento_cfg = (cfg or {}).get("casamento") or {}
+    max_erros = int(casamento_cfg.get("max_erros", 3))
+    janela = int(casamento_cfg.get("janela_cadeia_nt", JANELA_CADEIA_NT_PADRAO))
     distancias_cfg = (cfg or {}).get(
         "distancias",
         {
@@ -323,12 +326,17 @@ def localizar_detalhado(
                         if m == start_idx:
                             cands_m = [r_anc]
                         else:
-                            cands_m = [r for r in ocorr[nm] if r.ini >= r_anc.ini]
+                            cands_m = [
+                                r for r in ocorr[nm]
+                                if r.ini >= r_anc.ini and r.ini - r_anc.ini <= janela
+                            ]
                             if eh_circular:
                                 cands_m.extend(
                                     Regiao(r.ini + N, r.fim + N)
                                     for r in ocorr[nm]
-                                    if r.ini < r_anc.ini and (r.fim + N) - r_anc.ini <= N
+                                    if r.ini < r_anc.ini
+                                    and (r.ini + N) - r_anc.ini <= janela
+                                    and (r.fim + N) - r_anc.ini <= N
                                 )
                         cands_por_m.append((nm, cands_m))
 
@@ -563,6 +571,7 @@ def verificar(
     cfg: dict,
     *,
     circular: bool | None = None,
+    loc: Localizacao | None = None,
 ) -> list[Violacao]:
     """Verifica restrições de desenho para o conjunto e, se informado o alvo, distâncias e loops."""
     primers_dict = {
@@ -583,10 +592,10 @@ def verificar(
     if alvo is None:
         return violacoes
 
-    loc = localizar_detalhado(conjunto, alvo, cfg, circular=circular)
-    violacoes.extend(loc.violacoes)
+    loc_efetivo = loc if loc is not None else localizar_detalhado(conjunto, alvo, cfg, circular=circular)
+    violacoes.extend(loc_efetivo.violacoes)
 
-    regioes_verif = loc.regioes_completas
+    regioes_verif = loc_efetivo.regioes_completas
 
     # Distâncias na ordem do arquivo de configuração
     distancias_cfg = cfg.get("distancias", {})

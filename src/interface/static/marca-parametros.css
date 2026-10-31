@@ -1,0 +1,353 @@
+/*
+ * LampSim: estilos de Parâmetros em abas (marca-parametros.css).
+ * Complementa marca-analise.css para a tela de parâmetros:
+ * listas de definições (lista-def), selos de conferência (chip-marca),
+ * gráfico de calibração de Tm (cal-*) e destaques de distâncias.
+ */
+
+/* Selos e pílulas do cabeçalho do painel */
+
+.parametros-selos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Selo pequeno de conferência / pendência */
+
+.chip-marca {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--texto-suave);
+  background: var(--papel);
+  border: 1px solid var(--azul-suave);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* Lista de definições (condições de reação, regras e desenho) */
+
+.lista-def {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.lista-def-item {
+  display: grid;
+  grid-template-columns: minmax(160px, 32%) minmax(0, 1fr);
+  gap: 4px 24px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--azul-suave);
+  align-items: baseline;
+}
+
+.lista-def dt {
+  font-size: var(--tam-texto);
+  font-weight: 600;
+  color: var(--azul);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.lista-def-valor {
+  grid-column: 2;
+  margin: 0;
+  font-size: var(--tam-texto);
+  font-weight: 600;
+  color: var(--azul);
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+.lista-def-nota {
+  grid-column: 2;
+  margin: 0;
+  font-size: var(--tam-nota);
+  line-height: 1.5;
+  color: var(--texto-suave);
+}
+
+.lista-def-destaque {
+  color: var(--azul);
+  font-weight: 600;
+}
+
+/* Gráfico de calibração (cal-*) */
+
+.cal-legenda {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: var(--tam-nota);
+  color: var(--texto-suave);
+  line-height: 1.4;
+}
+
+.cal-legenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.amostra-banda {
+  width: 20px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--azul-suave);
+  border: 1px solid var(--azul);
+  box-sizing: border-box;
+}
+
+.ponto-amostra {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ponto-atual {
+  background: var(--azul);
+}
+
+.ponto-total {
+  background: var(--branco);
+  border: 2px solid var(--azul);
+  box-sizing: border-box;
+}
+
+.ponto-lado-b {
+  background: var(--rosa-texto);
+}
+
+.cal-grafico {
+  display: grid;
+  gap: 16px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  max-width: 100%;
+}
+
+.cal-linha {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+}
+
+.cal-linha-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cal-linha-nome {
+  font-size: var(--tam-nota);
+  font-weight: 700;
+  color: var(--azul);
+}
+
+.cal-linha-sub {
+  font-size: 12px;
+  color: var(--texto-suave);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+
+.cal-trilho {
+  position: relative;
+  height: 36px;
+  background: linear-gradient(var(--azul-suave), var(--azul-suave)) center / 100% 2px no-repeat;
+  min-width: 0;
+}
+
+.cal-banda {
+  position: absolute;
+  top: 8px;
+  height: 20px;
+  background: var(--azul-suave);
+  border: 1px solid var(--azul);
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+.cal-ponto {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.cal-ponto-cheio {
+  background: var(--azul);
+}
+
+.cal-ponto-cheio.cal-ponto-B {
+  background: var(--rosa-texto);
+}
+
+.cal-ponto-vazio {
+  background: var(--branco);
+  border: 2.5px solid var(--azul);
+}
+
+.cal-ponto-vazio.cal-ponto-B {
+  border-color: var(--rosa-texto);
+}
+
+.cal-ponto-rotulo {
+  position: absolute;
+  top: -14px;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--azul);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-ponto-rotulo-B {
+  color: var(--rosa-texto);
+}
+
+.cal-linha-ticks {
+  margin-top: -4px;
+}
+
+.cal-trilho-ticks {
+  position: relative;
+  height: 20px;
+  min-width: 0;
+}
+
+.cal-tick {
+  position: absolute;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--texto-suave);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-tick-meio {
+  transform: translateX(-50%);
+}
+
+.cal-tick-fim {
+  transform: translateX(-100%);
+}
+
+.cal-tick-inicio {
+  transform: none;
+}
+
+.cal-texto {
+  font-size: var(--tam-texto);
+  line-height: 1.55;
+  color: var(--azul);
+  margin: 0;
+}
+
+/* Distâncias e tabela */
+
+.tabela-estreita {
+  max-width: 42rem;
+}
+
+.ok {
+  color: var(--azul);
+  font-weight: 700;
+}
+
+.viol {
+  color: var(--erro);
+  font-weight: 700;
+}
+
+.nota {
+  font-size: var(--tam-nota);
+  color: var(--texto-suave);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.texto-vazio {
+  font-size: var(--tam-texto);
+  color: var(--texto-suave);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.texto-vazio a {
+  color: var(--azul);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* Responsividade: sem rolagem horizontal em 375 px */
+
+@media (max-width: 640px) {
+  .lista-def-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .lista-def-valor,
+  .lista-def-nota {
+    grid-column: auto;
+  }
+
+  .cal-linha {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .cal-linha-ticks .cal-linha-info {
+    display: none;
+  }
+}
+
+@media (max-width: 599px) {
+  .cal-tick {
+    font-size: 11px;
+  }
+
+  .cal-tick:nth-child(even) {
+    display: none;
+  }
+
+  .cal-tick:first-child,
+  .cal-tick:last-child {
+    display: block;
+  }
+
+  .cal-ponto-rotulo {
+    white-space: nowrap;
+  }
+
+  .cal-ponto-rotulo-b,
+  .cal-ponto-rotulo-B {
+    /* lado B abaixo do trilho: em cima ele cobria o texto da faixa e o rótulo do lado F */
+    top: auto;
+    bottom: -12px;
+  }
+
+  .cal-trilho {
+    margin-bottom: 12px;
+  }
+}

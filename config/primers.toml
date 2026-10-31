@@ -51,6 +51,7 @@ F3_B3_total = [120, 280]    # fim(B3c) - ini(F3); tamanho total externo F3-B3
 [casamento]
 max_erros = 3               # máximo de substituições para casamento aproximado
 bases_ponta_3p = 5          # incompatibilidade a menos de 5 nt da ponta que estende conta como "da ponta 3'"
+janela_cadeia_nt = 1000       # nt; regiões de uma mesma cadeia LAMP ficam dentro disso (F3–B3 vai até 280)
 
 [alvo]
 circular = false            # se true, permite amplicon cruzando a origem do alvo

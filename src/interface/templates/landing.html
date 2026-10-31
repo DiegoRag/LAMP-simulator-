@@ -1,0 +1,46 @@
+{% extends "base_marca.html" %}
+{% block titulo %}LampSim · Exames genéticos em qualquer lugar{% endblock %}
+{% block classe_corpo %} marca-landing{% endblock %}
+{% block conteudo %}
+<div class="landing">
+  <section class="landing-palco" aria-label="Ilustração: tubos LAMP virando de cor"
+           style="--cor-negativo: {{ tela.cor_negativo }}; --cor-positivo: {{ tela.cor_positivo }}">
+    <div class="landing-bandeja visor">
+      <span class="visor-canto visor-canto-no" aria-hidden="true"></span>
+      <span class="visor-canto visor-canto-ne" aria-hidden="true"></span>
+      <span class="visor-canto visor-canto-so" aria-hidden="true"></span>
+      <span class="visor-canto visor-canto-se" aria-hidden="true"></span>
+      <ul class="landing-tubos">
+        {% for t in tela.tubos %}
+        <li class="landing-tubo{% if t.positivo %} landing-tubo-positivo{% endif %}" style="--atraso: {{ t.atraso_ms }}ms">
+          <span class="landing-tubo-tampa" aria-hidden="true"></span>
+          <span class="landing-tubo-corpo" aria-hidden="true"><span class="landing-tubo-liquido"></span></span>
+          <span class="landing-tubo-rotulo">{{ t.rotulo }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  <div class="landing-texto">
+    <h1 class="landing-titulo">Exames genéticos em qualquer lugar, a qualquer hora.</h1>
+    <p class="landing-frase">O LampSim substitui as máquinas LAMP convencionais por um aparelho muito menor, portátil e barato.</p>
+    <a class="botao botao-principal landing-acao" href="/testar">Testar primers</a>
+    <section class="landing-roteiro" aria-labelledby="landing-roteiro-titulo">
+      <h2 id="landing-roteiro-titulo" class="landing-roteiro-titulo">O que dá para fazer aqui</h2>
+      <p class="landing-roteiro-texto">Teste um conjunto de primers LAMP contra o gene-alvo e veja, em tubos simulados, se a reação vira de rosa (negativo) para amarelo (positivo).</p>
+      <ol class="landing-etapas">
+        <li class="landing-etapa"><span class="landing-etapa-nome">Envie os primers</span><span class="landing-etapa-detalhe">CSV ou FASTA</span></li>
+        <li class="landing-etapa"><span class="landing-etapa-nome">Envie o gene-alvo</span><span class="landing-etapa-detalhe">FASTA</span></li>
+        <li class="landing-etapa landing-etapa-final"><span class="landing-etapa-nome">Veja os tubos</span><span class="landing-etapa-detalhe">leitura aos 15 min</span></li>
+      </ol>
+    </section>
+    <footer class="landing-rodape">
+      <p class="landing-aviso">{{ marca.aviso }}</p>
+      <p class="landing-projeto"><img class="landing-projeto-logo"
+         src="/static/marca/lamp_horizontal_colorido.svg" alt="Projeto LAMP" width="160"
+         height="64"><span>Senac + FMABC</span></p>
+    </footer>
+  </div>
+</div>
+{% endblock %}
+{% block rodape %}{% endblock %}

@@ -1,5 +1,6 @@
 """Módulo de análise termodinâmica e estrutural de primers LAMP."""
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -214,16 +215,27 @@ def analisar(leitura: Leitura, alvo: str | None, cfg: dict) -> Resultado:
             if av not in avisos:
                 avisos.append(av)
 
+    if alvo is not None and "N" in alvo:
+        n_n = alvo.count("N")
+        trechos_n = len(re.findall(r"N+", alvo))
+        txt_milhar = f"{n_n:,}".replace(",", ".")
+        aviso_n = (
+            f"O alvo tem {txt_milhar} bases N (desconhecidas) em {trechos_n} trecho(s); "
+            "nenhum primer é localizado sobre elas."
+        )
+        if aviso_n not in avisos:
+            avisos.append(aviso_n)
+
     # Violações
     if leitura.conjunto is not None:
         if alvo is not None and fita == "-":
-            v_test = verificar(leitura.conjunto, alvo, cfg)
+            v_test = verificar(leitura.conjunto, alvo, cfg, loc=loc)
             if any(v.regra == "nao_encontrado" for v in v_test):
                 violacoes = verificar(leitura.conjunto, rc(alvo), cfg)
             else:
                 violacoes = v_test
         else:
-            violacoes = verificar(leitura.conjunto, alvo, cfg)
+            violacoes = verificar(leitura.conjunto, alvo, cfg, loc=loc)
     else:
         violacoes = verificar_primers(leitura.primers, cfg)
 

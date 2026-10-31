@@ -1,0 +1,143 @@
+{% extends "base_marca.html" %}
+
+{% block titulo %}LampSim · Resultado: {{ tela.par }}{% endblock %}
+
+{% block classe_corpo %} marca-resultado{% endblock %}
+
+{% block estilos_extra %}<link rel="stylesheet" href="/static/marca-resultado.css">{% endblock %}
+
+{% block conteudo %}
+<div class="resultado" style="--cor-negativo: {{ tela.tubos.cor_inicial }}; --cor-positivo: {{ tela.tubos.cor_final }}">
+  <section class="resultado-topo" aria-labelledby="resultado-titulo">
+    <h1 id="resultado-titulo" class="resultado-titulo">Resultado</h1>
+    <p class="resultado-par">{{ tela.par }}</p>
+    <div class="veredito veredito-{{ tela.veredito.tom }}">
+      <span class="veredito-tubo" aria-hidden="true"><span class="veredito-liquido"></span></span>
+      <div class="veredito-textos">
+        <p class="veredito-frase">{{ tela.veredito.frase }}</p>
+        {% if tela.veredito.complemento %}<p class="veredito-complemento">{{ tela.veredito.complemento }}</p>{% endif %}
+        {% if tela.veredito.sensibilidade %}<p class="veredito-sensibilidade">{{ tela.veredito.sensibilidade }}</p>{% endif %}
+      </div>
+    </div>
+    <dl class="resultado-numeros">
+      {% for n in tela.numeros %}
+      <div class="resultado-numero">
+        <dt class="resultado-numero-rotulo">{{ n.rotulo }}</dt>
+        <dd class="resultado-numero-valor">{{ n.valor }}</dd>
+        {% if n.detalhe %}<dd class="resultado-numero-detalhe">{{ n.detalhe }}</dd>{% endif %}
+      </div>
+      {% endfor %}
+    </dl>
+    <div class="resultado-acoes">
+      <a class="botao botao-principal" href="{{ tela.url_analise }}">Ver análise detalhada</a>
+      <a class="botao botao-secundario" href="{{ tela.url_exportar }}" download>Exportar resultados</a>
+      <a class="botao botao-texto" href="{{ tela.url_outro }}">Testar outro conjunto</a>
+    </div>
+  </section>
+  {% if tela.simulacao %}
+  <section class="resultado-secao tubos-palco" aria-labelledby="t-bandeja" data-tubos-modo="simulacao">
+    <h2 id="t-bandeja" class="resultado-secao-titulo">Tubos simulados</h2>
+    <p class="resultado-legenda">Cada tubo simula uma amostra com uma quantidade diferente do gene-alvo. Rosa quer dizer que não amplificou; amarelo, que amplificou. Arraste o tempo ou aperte Reproduzir para ver a cor mudar. A leitura vale aos {{ tela.tubos.leitura_texto }}.</p>
+    <div class="visor resultado-visor">
+      <span class="visor-canto visor-canto-no" aria-hidden="true"></span>
+      <span class="visor-canto visor-canto-ne" aria-hidden="true"></span>
+      <span class="visor-canto visor-canto-so" aria-hidden="true"></span>
+      <span class="visor-canto visor-canto-se" aria-hidden="true"></span>
+      <div class="tubos-bandeja" data-tubos-bandeja role="group" aria-label="Tubos do experimento; escolha um para ver">
+        {% for t in tela.tubos.tubos %}
+        {% set referencia = t.papel != "amostra" and (loop.first or loop.previtem.papel == "amostra") %}
+        {% set cor = t.cores[0] %}
+        <button type="button" class="tubo{% if referencia %} tubo-referencia{% endif %}" data-tubo="{{ loop.index0 }}" aria-pressed="{{ 'true' if loop.first else 'false' }}">
+          <span class="tubo-tampa" aria-hidden="true"></span>
+          <span class="tubo-corpo" aria-hidden="true"><span class="tubo-liquido" style="--cor: {{ cor }}"></span></span>
+          <span class="tubo-nome" data-tubo-nome>{{ t.nome }}</span>
+          {% if t.detalhe %}<span class="tubo-detalhe">{{ t.detalhe }}</span>{% endif %}
+          <span class="tubo-pct mono" data-tubo-pct>—</span>
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="tubos-tempo">
+      <button type="button" class="botao botao-principal tubos-tocar" data-tubos-tocar aria-pressed="false">Reproduzir</button>
+      <label class="tubos-cursor-rotulo" for="tubos-cursor">Tempo</label>
+      <input class="tubos-cursor" id="tubos-cursor" type="range" data-tubos-cursor min="0" max="{{ tela.tubos.duracao_min }}" step="{{ tela.tubos.passo_min }}" value="0">
+      <output class="tubos-relogio mono" for="tubos-cursor" data-tubos-relogio>0,0 min</output>
+      <label class="tubos-duracao">Duração
+        <input type="number" class="campo-numero" data-tubos-duracao min="1" max="{{ tela.tubos.duracao_max_min }}" step="1" value="{{ tela.tubos.duracao_min }}"> min</label>
+      <label class="tubos-velocidade">Velocidade
+        <select class="campo-numero" data-tubos-velocidade>
+          {% for v in tela.tubos.velocidades %}
+          <option value="{{ '%g'|format(v) }}"{% if v == tela.tubos.velocidade %} selected{% endif %}>{{ '%g'|format(v) }}×</option>
+          {% endfor %}
+        </select></label>
+    </div>
+  </section>
+
+  <section class="resultado-secao" aria-labelledby="t-faixas">
+    <h2 id="t-faixas" class="resultado-secao-titulo">Faixas de cor no tempo</h2>
+    <p class="resultado-legenda">A linha tracejada marca a leitura aos {{ tela.tubos.leitura_texto }}; o diagnóstico de cada tubo sai da cor nesse instante.</p>
+    <div class="tubos-faixas" data-tubos-faixas>
+      {% for t in tela.tubos.tubos %}
+      <button type="button" class="tubos-faixa-linha" data-faixa="{{ loop.index0 }}" aria-label="Escolher {{ t.nome }}">
+        <span class="tubos-faixa-nome" data-faixa-nome>{{ t.nome }}</span>
+        <canvas class="tubos-faixa" data-tubos-faixa="{{ loop.index0 }}" aria-hidden="true"></canvas>
+      </button>
+      {% endfor %}
+      <div class="tubos-faixas-leitura" data-tubos-marca-leitura aria-hidden="true"></div>
+      <div class="tubos-faixas-marcador" data-tubos-marcador aria-hidden="true"></div>
+      <div class="tubos-faixas-eixo mono" data-tubos-eixo aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <section class="resultado-secao" aria-labelledby="t-tabela">
+    <h2 id="t-tabela" class="resultado-secao-titulo">Leitura aos {{ tela.tubos.leitura_texto }}</h2>
+    <div class="tabela-rolagem" tabindex="0" role="region" aria-label="Tubos simulados">
+      <table class="tabela tubos-tabela">
+        <thead>
+          <tr>
+            <th scope="col">Tubo</th>
+            <th scope="col">Papel</th>
+            <th scope="col" class="num">Cópias esperadas</th>
+            <th scope="col" class="num">Cópias no tubo</th>
+            <th scope="col" class="num">Eficiência</th>
+            <th scope="col" class="num">Fica amarelo em</th>
+            <th scope="col">Diagnóstico</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tela.tubos.tubos %}
+          <tr data-tubos-linha="{{ loop.index0 }}">
+            <th scope="row">{{ t.nome }}{% if t.detalhe %}<span class="tubos-tabela-detalhe">{{ t.detalhe }}</span>{% endif %}</th>
+            <td>{{ t.papel_texto }}</td>
+            <td class="num mono">{{ t.copias_media_texto }}</td>
+            <td class="num mono">{{ t.copias_texto }}</td>
+            <td class="num mono">{{ t.eficiencia_texto }}</td>
+            <td class="num mono">{{ t.t_positivo_texto }}</td>
+            <td><span class="tubos-diag tubos-diag-{{ t.diagnostico }}">{{ t.diagnostico_texto }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="resultado-legenda">Cópias no tubo: o número real varia um pouco em volta do esperado, como numa pipetagem de verdade (sorteio fixo, sempre o mesmo). "Fica amarelo em": o minuto em que a cor passa da metade do caminho.</p>
+    <figure class="tubos-grafico tubos-grafico-largo">
+      <canvas class="tubos-curva" data-tubos-curva role="img" aria-label="pH do tubo escolhido ao longo do tempo"></canvas>
+      <figcaption class="tubos-leitura" data-tubos-leitura aria-live="polite"></figcaption>
+    </figure>
+  </section>
+
+  <p class="resultado-nota">Modelo de eficiência e cinética provisório, a calibrar com bancada.</p>
+  <noscript><p class="resultado-aviso">Os tubos precisam de JavaScript para mostrar as cores.</p></noscript>
+  {% else %}
+  <div class="resultado-aviso" role="note"><p>{{ tela.tubos.aviso }}</p>
+    <p><a href="{{ tela.url_analise }}">Ver análise detalhada</a></p></div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block depois_do_rodape %}
+{% if tela.simulacao %}
+<script type="application/json" id="tubos-dados">{{ tela.tubos|tojson }}</script>
+<script src="/static/tubos.js" defer></script>
+{% endif %}
+{% endblock %}
